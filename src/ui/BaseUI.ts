@@ -15,6 +15,7 @@ export class BaseUI {
     private uiWrapper: HTMLDivElement = document.createElement('div');
 
     private BottomControls!: HTMLDivElement;
+    private BottomUpperControls!: HTMLDivElement;
     private BottomLeftControls!: HTMLDivElement;
     private BottomRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
@@ -51,15 +52,16 @@ export class BaseUI {
 
         const AllBottomControls = BottomControls();
         this.BottomControls = AllBottomControls.Bottom;
+        this.BottomUpperControls = AllBottomControls.BottomUpper;
+        this.BottomLeftControls = AllBottomControls.BottomLeft;
+        this.BottomRightControls = AllBottomControls.BottomRight;
+
         this.uiWrapper.appendChild(this.BottomControls);
 
         this.SeekBar = SeekBarControl();
         this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
         this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
-        AllBottomControls.BottomUpper.appendChild(this.SeekBar);
-
-        this.BottomLeftControls = AllBottomControls.BottomLeft;
-        this.BottomRightControls = AllBottomControls.BottomRight;
+        this.BottomUpperControls.appendChild(this.SeekBar);
 
         this.PlayPause = PlayPauseControl();
         this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
