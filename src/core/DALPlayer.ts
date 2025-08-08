@@ -1,16 +1,22 @@
+import {BaseUI} from "../ui/BaseUI";
+
 type Listener = (...args: any[]) => void;
+
+type DALPlayerUIOptions = "Base" | "V1";
 
 export interface DALPlayerOptions {
     parent: HTMLElement | string;
     source?: string;
     autoplay?: boolean;
     controls?: boolean;
+    ui?: DALPlayerUIOptions;
 }
 
 export class DALPlayer {
     private readonly container: HTMLElement;
     private readonly video: HTMLVideoElement;
     private listeners: Record<string, Listener[]> = {};
+    private readonly ui;
 
     constructor(options: DALPlayerOptions) {
         this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
@@ -32,6 +38,14 @@ export class DALPlayer {
         this.container.appendChild(this.video);
 
         if (options.source) this.setSource(options.source);
+
+        if (options.ui) {
+            this.video.controls = false;
+            switch (options.ui) {
+                default:
+                    this.ui = new BaseUI(this);
+            }
+        }
 
         ['play', 'pause', 'timeupdate', 'ended'].forEach(eventName => {
             this.video.addEventListener(eventName, (ev) => {
@@ -86,6 +100,10 @@ export class DALPlayer {
         return this.video.playbackRate;
     }
 
+    public getContainer(): HTMLElement {
+        return this.container;
+    }
+
     public isMuted(): boolean {
         return this.video.muted;
     }
@@ -96,10 +114,6 @@ export class DALPlayer {
 
     public isPlaying(): boolean {
         return !this.video.paused && !this.video.ended && this.video.readyState > 2;
-    }
-
-    public isFullscreen(): boolean {
-        return document.fullscreenElement === this.video;
     }
 
     public isLooping(): boolean {
@@ -119,11 +133,16 @@ export class DALPlayer {
     }
 
     public enterFullscreen(): void {
-        if (this.video.requestFullscreen) this.video.requestFullscreen();
+        if (this.container.requestFullscreen) this.container.requestFullscreen();
     }
 
-    public exitFullscreen(): void {
-        if (document.fullscreenElement) document.exitFullscreen();
+    public isFullscreen(): boolean {
+        return document.fullscreenElement === this.container;
+    }
+
+    public toggleFullscreen(): void {
+        if (this.isFullscreen()) document.exitFullscreen();
+        else this.enterFullscreen();
     }
 
     public destroy(): void {
@@ -131,6 +150,7 @@ export class DALPlayer {
         this.video.src = '';
         this.video.load();
         this.video.remove();
+        if (this.ui) this.ui.destroy();
     }
 
     on(event: string, fn: Listener) {
