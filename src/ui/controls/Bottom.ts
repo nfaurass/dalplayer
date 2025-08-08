@@ -60,19 +60,19 @@ export function BottomControls() {
         width: "100%"
     });
 
-    const BottomUpperRight = document.createElement('div');
-    Object.assign(BottomUpperRight.style, {
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        width: "auto"
-    });
+    // const BottomUpperRight = document.createElement('div');
+    // Object.assign(BottomUpperRight.style, {
+    //     display: "flex",
+    //     justifyContent: "flex-end",
+    //     alignItems: "center",
+    //     width: "0"
+    // });
 
     BottomLower.appendChild(BottomLowerLeft);
     BottomLower.appendChild(BottomLowerRight);
 
     BottomUpper.appendChild(BottomUpperLeft);
-    BottomUpper.appendChild(BottomUpperRight);
+    // BottomUpper.appendChild(BottomUpperRight);
 
     Bottom.appendChild(BottomUpper);
     Bottom.appendChild(BottomLower);
@@ -81,7 +81,7 @@ export function BottomControls() {
         Bottom,
         BottomUpper,
         BottomUpperLeft,
-        BottomUpperRight,
+        // BottomUpperRight,
         BottomLower,
         BottomLowerLeft,
         BottomLowerRight

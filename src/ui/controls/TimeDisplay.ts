@@ -6,6 +6,6 @@ export default function TimeDisplayControl(): HTMLSpanElement {
     TimeDisplay.style.outline = "none";
     TimeDisplay.style.fontSize = "1em";
     TimeDisplay.style.backgroundColor = "transparent";
-    TimeDisplay.innerText = "1:40";
+    TimeDisplay.innerText = "0:00 / 0:00";
     return TimeDisplay;
 }
