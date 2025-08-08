@@ -8,6 +8,7 @@ import FullscreenControl from "./controls/Fullscreen";
 import SeekBarControl from "./controls/SeekBar";
 import {BottomControls} from "./controls/Bottom";
 import TimeDisplayControl from "./controls/TimeDisplay";
+import {formatTime} from "./utils/formatTime";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -17,13 +18,15 @@ export class BaseUI {
 
     private BottomControls!: HTMLDivElement;
     private BottomUpperLeftControls!: HTMLDivElement;
-    private BottomUpperRightControls!: HTMLDivElement;
+    // private BottomUpperRightControls!: HTMLDivElement;
     private BottomLowerLeftControls!: HTMLDivElement;
     private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
+
+    private playerDuration: number = 0;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -33,6 +36,8 @@ export class BaseUI {
 
         this.player.on('play', () => this.updatePlayPauseButton());
         this.player.on('pause', () => this.updatePlayPauseButton());
+        this.player.on('loadedmetadata', () => this.updateTimeDisplay());
+        this.player.on('timeupdate', () => this.updateTimeDisplay());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
@@ -56,7 +61,7 @@ export class BaseUI {
         const AllBottomControls = BottomControls();
         this.BottomControls = AllBottomControls.Bottom;
         this.BottomUpperLeftControls = AllBottomControls.BottomUpperLeft;
-        this.BottomUpperRightControls = AllBottomControls.BottomUpperRight;
+        // this.BottomUpperRightControls = AllBottomControls.BottomUpperRight;
         this.BottomLowerLeftControls = AllBottomControls.BottomLowerLeft;
         this.BottomLowerRightControls = AllBottomControls.BottomLowerRight;
 
@@ -71,12 +76,12 @@ export class BaseUI {
         this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
         this.BottomLowerLeftControls.appendChild(this.PlayPause);
 
+        this.TimeDisplay = TimeDisplayControl();
+        this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
+
         this.Fullscreen = FullscreenControl();
         this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
         this.BottomLowerRightControls.appendChild(this.Fullscreen);
-
-        this.TimeDisplay = TimeDisplayControl();
-        this.BottomUpperRightControls.appendChild(this.TimeDisplay);
     }
 
     private updatePlayPauseButton() {
@@ -85,6 +90,12 @@ export class BaseUI {
 
     private updateFullscreenToggleButton() {
         this.Fullscreen!.innerHTML = this.player.isFullscreen() ? FullscreenExitSVG() : FullscreenSVG();
+    }
+
+    private updateTimeDisplay() {
+        if (!this.playerDuration) this.playerDuration = this.player.getDuration();
+        if (this.playerDuration > 0) this.TimeDisplay.innerHTML = formatTime(this.player.getCurrentTime()) + " / " + formatTime(this.playerDuration);
+        else setTimeout(() => this.updateTimeDisplay(), 500);
     }
 
     destroy() {
