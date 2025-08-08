@@ -1,37 +1,46 @@
 export default function SeekBarControl(): HTMLDivElement {
     const seekBar = document.createElement('div');
     seekBar.id = 'seekBar';
-    seekBar.style.position = 'absolute';
-    seekBar.style.bottom = '50px';
-    seekBar.style.left = '50%';
-    seekBar.style.transform = 'translateX(-50%)';
-    seekBar.style.width = '95%';
-    seekBar.style.height = '10px';
-    seekBar.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-    seekBar.style.cursor = 'pointer';
-    seekBar.style.zIndex = '2';
-    seekBar.style.userSelect = 'none';
+    Object.assign(seekBar.style, {
+        position: 'relative',
+        width: '100%',
+        height: '10px',
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        cursor: 'pointer',
+        userSelect: 'none',
+        borderRadius: '5px',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        zIndex: '2'
+    });
 
     const progressFill = document.createElement('div');
-    progressFill.style.position = 'absolute';
-    progressFill.style.left = '0';
-    progressFill.style.top = '0';
-    progressFill.style.height = '100%';
-    progressFill.style.width = '0%';
-    progressFill.style.backgroundColor = 'red';
+    Object.assign(progressFill.style, {
+        position: 'absolute',
+        left: '0',
+        top: '0',
+        height: '100%',
+        width: '0%',
+        backgroundColor: 'red',
+        transition: 'width 0.1s linear'
+    });
     seekBar.appendChild(progressFill);
 
     const thumb = document.createElement('div');
-    thumb.style.position = 'absolute';
-    thumb.style.top = '-5px';
-    thumb.style.left = '0%';
-    thumb.style.width = '20px';
-    thumb.style.height = '20px';
-    thumb.style.backgroundColor = 'red';
-    thumb.style.border = '2px solid red';
-    thumb.style.borderRadius = '50%';
-    thumb.style.cursor = 'pointer';
-    thumb.style.zIndex = '3';
+    Object.assign(thumb.style, {
+        position: 'absolute',
+        top: '-5px',
+        left: '0%',
+        width: '20px',
+        height: '20px',
+        backgroundColor: 'red',
+        border: '2px solid red',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        zIndex: '3',
+        transition: 'left 0.1s linear',
+        boxSizing: 'border-box'
+    });
     seekBar.appendChild(thumb);
 
     let isDragging = false;
