@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>DALPlayer demo</title>
+    <script src="../dist/dalplayer.js"></script>
+</head>
+<body>
+<div id="player"></div>
+<hr>
+<div id="play-button">Play</div>
+<hr>
+<div id="pause-button">Pause</div>
+
+<script>
+    const p = new DALPlayer({
+        parent: document.getElementById("player") || "player",
+        source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+        autoplay: true
+    });
+
+    document.getElementById("play-button").addEventListener("click", () => p.play());
+    document.getElementById("pause-button").addEventListener("click", () => p.pause());
+</script>
+</body>
+</html>

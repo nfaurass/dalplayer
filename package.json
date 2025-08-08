@@ -1,0 +1,28 @@
+{
+  "name": "dalplayer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --sourcemap --minify --format=iife --outfile=dist/dalplayer.js --target=es2017",
+    "build:dev": "esbuild src/index.ts --bundle --sourcemap --format=iife --outfile=dist/dalplayer.js --target=es2017 --watch",
+    "build:esm": "esbuild src/index.ts --bundle --sourcemap --format=esm --outfile=dist/dalplayer.esm.js --target=es2017",
+    "types": "tsc --emitDeclarationOnly",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfaurass/dalplayer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nfaurass/dalplayer/issues"
+  },
+  "homepage": "https://github.com/nfaurass/dalplayer#readme",
+  "devDependencies": {
+    "esbuild": "^0.25.8",
+    "typescript": "^5.9.2"
+  }
+}
