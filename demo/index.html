@@ -1,26 +1,28 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>DALPlayer demo</title>
+    <meta charset="utf-8">
+    <title>DALPlayer Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="../dist/dalplayer.js"></script>
 </head>
-<body>
-<div id="player"></div>
-<hr>
-<div id="play-button">Play</div>
-<hr>
-<div id="pause-button">Pause</div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<div class="text-center space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">
+        DALPlayer Demo
+    </h1>
+    <div id="player" class="w-full max-w-4xl mx-auto"></div>
+</div>
 
 <script>
-    const p = new DALPlayer({
+    new DALPlayer({
         parent: document.getElementById("player") || "player",
         source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-        autoplay: true
+        autoplay: true,
+        ui: true
     });
-
-    document.getElementById("play-button").addEventListener("click", () => p.play());
-    document.getElementById("pause-button").addEventListener("click", () => p.pause());
 </script>
+
 </body>
 </html>
