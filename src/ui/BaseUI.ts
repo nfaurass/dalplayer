@@ -5,6 +5,7 @@ import PauseSVG from "./svg/Pause";
 import FullscreenExitSVG from "./svg/FullscreenExit";
 import FullscreenSVG from "./svg/Fullscreen";
 import FullscreenControl from "./controls/Fullscreen";
+import SeekBarControl from "./controls/SeekBar";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -12,8 +13,9 @@ export class BaseUI {
     private container: HTMLElement;
     private uiWrapper: HTMLDivElement = document.createElement('div');
 
-    private PlayPause: HTMLButtonElement | undefined;
-    private Fullscreen: HTMLButtonElement | undefined;
+    private PlayPause!: HTMLButtonElement;
+    private Fullscreen!: HTMLButtonElement;
+    private SeekBar!: HTMLDivElement;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -53,6 +55,11 @@ export class BaseUI {
         this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
         this.uiWrapper.appendChild(this.Fullscreen);
 
+        // SeekBar
+        this.SeekBar = SeekBarControl();
+        this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
+        this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
+        this.uiWrapper.appendChild(this.SeekBar);
     }
 
     private updatePlayPauseButton() {
