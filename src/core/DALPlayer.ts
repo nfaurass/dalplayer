@@ -1,3 +1,5 @@
+type Listener = (...args: any[]) => void;
+
 export interface DALPlayerOptions {
     parent: HTMLElement | string;
     source?: string;
@@ -8,6 +10,7 @@ export interface DALPlayerOptions {
 export class DALPlayer {
     private readonly container: HTMLElement;
     private readonly video: HTMLVideoElement;
+    private listeners: Record<string, Listener[]> = {};
 
     constructor(options: DALPlayerOptions) {
         this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
@@ -29,6 +32,12 @@ export class DALPlayer {
         this.container.appendChild(this.video);
 
         if (options.source) this.setSource(options.source);
+
+        ['play', 'pause', 'timeupdate', 'ended'].forEach(eventName => {
+            this.video.addEventListener(eventName, (ev) => {
+                this.emit(eventName, ev);
+            });
+        });
     }
 
     public setSource(src: string): void {
@@ -122,5 +131,20 @@ export class DALPlayer {
         this.video.src = '';
         this.video.load();
         this.video.remove();
+    }
+
+    on(event: string, fn: Listener) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(fn);
+    }
+
+    off(event: string, fn: Listener) {
+        if (!this.listeners[event]) return;
+        this.listeners[event] = this.listeners[event].filter(l => l !== fn);
+    }
+
+    emit(event: string, ...args: any[]) {
+        if (!this.listeners[event]) return;
+        this.listeners[event].forEach(fn => fn(...args));
     }
 }
