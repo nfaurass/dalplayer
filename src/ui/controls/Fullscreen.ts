@@ -1,11 +1,11 @@
 export default function FullscreenControl(): HTMLButtonElement {
-    const PlayPauseControl = document.createElement('button');
-    PlayPauseControl.id = "FullscreenControl";
-    PlayPauseControl.style.position = 'absolute';
-    PlayPauseControl.style.bottom = '10px';
-    PlayPauseControl.style.right = '10px';
-    PlayPauseControl.style.border = "none";
-    PlayPauseControl.style.outline = "none";
-    PlayPauseControl.style.backgroundColor = "transparent";
-    return PlayPauseControl;
+    const FullscreenControl = document.createElement('button');
+    FullscreenControl.id = "FullscreenControl";
+    FullscreenControl.style.position = 'absolute';
+    FullscreenControl.style.bottom = '10px';
+    FullscreenControl.style.right = '10px';
+    FullscreenControl.style.border = "none";
+    FullscreenControl.style.outline = "none";
+    FullscreenControl.style.backgroundColor = "transparent";
+    return FullscreenControl;
 }
