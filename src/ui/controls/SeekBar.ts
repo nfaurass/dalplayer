@@ -4,12 +4,12 @@ export default function SeekBarControl(): HTMLDivElement {
     Object.assign(seekBar.style, {
         position: 'relative',
         width: '100%',
-        height: '10px',
+        height: '5px',
         backgroundColor: 'rgba(255, 255, 255, 0.3)',
         cursor: 'pointer',
         userSelect: 'none',
         borderRadius: '5px',
-        overflow: 'hidden',
+        // overflow: 'hidden',
         boxSizing: 'border-box',
         zIndex: '2'
     });
@@ -29,17 +29,15 @@ export default function SeekBarControl(): HTMLDivElement {
     const thumb = document.createElement('div');
     Object.assign(thumb.style, {
         position: 'absolute',
-        top: '-5px',
-        left: '0%',
-        width: '20px',
-        height: '20px',
+        top: '-2.5px',
+        left: '0px',
+        width: '10px',
+        height: '10px',
         backgroundColor: 'red',
         border: '2px solid red',
         borderRadius: '50%',
         cursor: 'pointer',
         zIndex: '3',
-        transition: 'left 0.1s linear',
-        boxSizing: 'border-box'
     });
     seekBar.appendChild(thumb);
 
@@ -51,7 +49,7 @@ export default function SeekBarControl(): HTMLDivElement {
         pos = Math.max(0, Math.min(pos, rect.width));
         const percent = (pos / rect.width) * 100;
         progressFill.style.width = `${percent}%`;
-        thumb.style.left = `calc(${percent}% - 10px)`;
+        thumb.style.left = `${percent}%`;
         const event = new CustomEvent('seek', {detail: percent});
         seekBar.dispatchEvent(event);
     }
@@ -89,7 +87,7 @@ export default function SeekBarControl(): HTMLDivElement {
     (seekBar as any).setProgress = (percent: number) => {
         percent = Math.max(0, Math.min(100, percent));
         progressFill.style.width = `${percent}%`;
-        thumb.style.left = `calc(${percent}% - 10px)`;
+        thumb.style.left = `${percent}%`;
     };
 
     return seekBar;
