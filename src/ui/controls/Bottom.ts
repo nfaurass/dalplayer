@@ -21,7 +21,7 @@ export function BottomControls() {
     Object.assign(BottomUpper.style, {
         display: "flex",
         justifyContent: "flex-start",
-        alignItems: "flex-end",
+        alignItems: "center",
         width: "100%",
         gap: "10px"
     });
@@ -34,26 +34,45 @@ export function BottomControls() {
         width: "100%"
     });
 
-    const BottomLeft = document.createElement('div');
-    Object.assign(BottomLeft.style, {
+    const BottomLowerLeft = document.createElement('div');
+    Object.assign(BottomLowerLeft.style, {
         display: "flex",
         justifyContent: "flex-start",
         alignItems: "center",
-        gap: "10px",
+        gap: "20px",
         width: "50%"
     });
 
-    const BottomRight = document.createElement('div');
-    Object.assign(BottomRight.style, {
+    const BottomLowerRight = document.createElement('div');
+    Object.assign(BottomLowerRight.style, {
         display: "flex",
         justifyContent: "flex-end",
         alignItems: "center",
-        gap: "10px",
+        gap: "20px",
         width: "50%"
     });
 
-    BottomLower.appendChild(BottomLeft);
-    BottomLower.appendChild(BottomRight);
+    const BottomUpperLeft = document.createElement('div');
+    Object.assign(BottomUpperLeft.style, {
+        display: "flex",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        width: "100%"
+    });
+
+    const BottomUpperRight = document.createElement('div');
+    Object.assign(BottomUpperRight.style, {
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        width: "auto"
+    });
+
+    BottomLower.appendChild(BottomLowerLeft);
+    BottomLower.appendChild(BottomLowerRight);
+
+    BottomUpper.appendChild(BottomUpperLeft);
+    BottomUpper.appendChild(BottomUpperRight);
 
     Bottom.appendChild(BottomUpper);
     Bottom.appendChild(BottomLower);
@@ -61,8 +80,10 @@ export function BottomControls() {
     return {
         Bottom,
         BottomUpper,
+        BottomUpperLeft,
+        BottomUpperRight,
         BottomLower,
-        BottomLeft,
-        BottomRight
+        BottomLowerLeft,
+        BottomLowerRight
     };
 }

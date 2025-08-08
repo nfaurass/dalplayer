@@ -7,6 +7,7 @@ import FullscreenSVG from "./svg/Fullscreen";
 import FullscreenControl from "./controls/Fullscreen";
 import SeekBarControl from "./controls/SeekBar";
 import {BottomControls} from "./controls/Bottom";
+import TimeDisplayControl from "./controls/TimeDisplay";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -15,12 +16,14 @@ export class BaseUI {
     private uiWrapper: HTMLDivElement = document.createElement('div');
 
     private BottomControls!: HTMLDivElement;
-    private BottomUpperControls!: HTMLDivElement;
-    private BottomLeftControls!: HTMLDivElement;
-    private BottomRightControls!: HTMLDivElement;
+    private BottomUpperLeftControls!: HTMLDivElement;
+    private BottomUpperRightControls!: HTMLDivElement;
+    private BottomLowerLeftControls!: HTMLDivElement;
+    private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
+    private TimeDisplay!: HTMLSpanElement;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -52,24 +55,28 @@ export class BaseUI {
 
         const AllBottomControls = BottomControls();
         this.BottomControls = AllBottomControls.Bottom;
-        this.BottomUpperControls = AllBottomControls.BottomUpper;
-        this.BottomLeftControls = AllBottomControls.BottomLeft;
-        this.BottomRightControls = AllBottomControls.BottomRight;
+        this.BottomUpperLeftControls = AllBottomControls.BottomUpperLeft;
+        this.BottomUpperRightControls = AllBottomControls.BottomUpperRight;
+        this.BottomLowerLeftControls = AllBottomControls.BottomLowerLeft;
+        this.BottomLowerRightControls = AllBottomControls.BottomLowerRight;
 
         this.uiWrapper.appendChild(this.BottomControls);
 
         this.SeekBar = SeekBarControl();
         this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
         this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
-        this.BottomUpperControls.appendChild(this.SeekBar);
+        this.BottomUpperLeftControls.appendChild(this.SeekBar);
 
         this.PlayPause = PlayPauseControl();
         this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
-        this.BottomLeftControls.appendChild(this.PlayPause);
+        this.BottomLowerLeftControls.appendChild(this.PlayPause);
 
         this.Fullscreen = FullscreenControl();
         this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
-        this.BottomRightControls.appendChild(this.Fullscreen);
+        this.BottomLowerRightControls.appendChild(this.Fullscreen);
+
+        this.TimeDisplay = TimeDisplayControl();
+        this.BottomUpperRightControls.appendChild(this.TimeDisplay);
     }
 
     private updatePlayPauseButton() {
