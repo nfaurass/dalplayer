@@ -6,6 +6,7 @@ import FullscreenExitSVG from "./svg/FullscreenExit";
 import FullscreenSVG from "./svg/Fullscreen";
 import FullscreenControl from "./controls/Fullscreen";
 import SeekBarControl from "./controls/SeekBar";
+import {BottomControls} from "./controls/Bottom";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -13,6 +14,9 @@ export class BaseUI {
     private container: HTMLElement;
     private uiWrapper: HTMLDivElement = document.createElement('div');
 
+    private BottomControls!: HTMLDivElement;
+    private BottomLeftControls!: HTMLDivElement;
+    private BottomRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
@@ -45,21 +49,25 @@ export class BaseUI {
         if (video) this.uiWrapper.appendChild(video);
         this.container.appendChild(this.uiWrapper);
 
-        // Play/Pause
-        this.PlayPause = PlayPauseControl();
-        this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
-        this.uiWrapper.appendChild(this.PlayPause);
+        const AllBottomControls = BottomControls();
+        this.BottomControls = AllBottomControls.Bottom;
+        this.uiWrapper.appendChild(this.BottomControls);
 
-        // Fullscreen
-        this.Fullscreen = FullscreenControl();
-        this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
-        this.uiWrapper.appendChild(this.Fullscreen);
-
-        // SeekBar
         this.SeekBar = SeekBarControl();
         this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
         this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
-        this.uiWrapper.appendChild(this.SeekBar);
+        AllBottomControls.BottomUpper.appendChild(this.SeekBar);
+
+        this.BottomLeftControls = AllBottomControls.BottomLeft;
+        this.BottomRightControls = AllBottomControls.BottomRight;
+
+        this.PlayPause = PlayPauseControl();
+        this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
+        this.BottomLeftControls.appendChild(this.PlayPause);
+
+        this.Fullscreen = FullscreenControl();
+        this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
+        this.BottomRightControls.appendChild(this.Fullscreen);
     }
 
     private updatePlayPauseButton() {
