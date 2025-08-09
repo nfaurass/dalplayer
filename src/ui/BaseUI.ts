@@ -52,6 +52,8 @@ export class BaseUI {
         this.updatePlayPauseButton();
         this.updateFullscreenToggleButton();
         this.updateVolumeButton();
+
+        this.addShortcuts();
     }
 
     private createUI() {
@@ -150,6 +152,49 @@ export class BaseUI {
         this.BottomControls.style.opacity = '1';
         this.BottomControls.style.pointerEvents = 'auto';
         this.BottomControls.style.transition = 'opacity 0.5s ease';
+    }
+
+    // Shortcuts
+    private addShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+            switch (e.code) {
+                // Play/Pause
+                case 'Space':
+                    e.preventDefault();
+                    this.player.togglePlayPause();
+                    break;
+                // Seek
+                case 'ArrowRight':
+                    e.preventDefault();
+                    this.player.setSeekPosition(Math.min(this.player.getSeekPosition() + 5, this.player.getDuration()));
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    this.player.setSeekPosition(Math.max(this.player.getSeekPosition() - 5, 0));
+                    break;
+                // Fullscreen
+                case 'KeyF':
+                    e.preventDefault();
+                    this.player.toggleFullscreen();
+                    break;
+                // Volume
+                case 'KeyM':
+                    e.preventDefault();
+                    this.player.toggleVolume();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    this.player.setVolume(Math.min(this.player.getVolume() + 0.1, 1));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.player.setVolume(Math.max(this.player.getVolume() - 0.1, 0));
+                    break;
+            }
+        });
+
     }
 
     destroy() {
