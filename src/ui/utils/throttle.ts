@@ -1,11 +1,11 @@
-export function throttle(fn: () => void, delay: number): (() => void) {
+export function throttle<T extends (...args: any[]) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
     let timeout: number | null = null;
-    return () => {
+    return (...args: Parameters<T>) => {
         if (timeout === null) {
-            timeout = setTimeout(() => {
+            timeout = window.setTimeout(() => {
                 timeout = null;
             }, delay);
-            fn();
+            fn(...args);
         }
     };
 }
