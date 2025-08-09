@@ -63,6 +63,7 @@ export class DALPlayer {
     public setVolume(value: number): void {
         const volume = Math.max(0, Math.min(1, value));
         if (!volume) this.setMuted(true);
+        else this.setMuted(false);
         this.video.volume = volume;
         this.previousVolume = volume;
     }
