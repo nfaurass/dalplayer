@@ -9,7 +9,6 @@ export default function SeekBarControl(): HTMLDivElement {
         cursor: 'pointer',
         userSelect: 'none',
         borderRadius: '5px',
-        // overflow: 'hidden',
         boxSizing: 'border-box',
         zIndex: '2'
     });
@@ -21,10 +20,9 @@ export default function SeekBarControl(): HTMLDivElement {
         top: '0',
         height: '100%',
         width: '0%',
-        backgroundColor: 'red',
-        transition: 'width 0.1s linear'
+        backgroundColor: 'white',
+        transition: 'width 0s linear'
     });
-    seekBar.appendChild(progressFill);
 
     const thumb = document.createElement('div');
     Object.assign(thumb.style, {
@@ -33,56 +31,14 @@ export default function SeekBarControl(): HTMLDivElement {
         left: '0px',
         width: '10px',
         height: '10px',
-        backgroundColor: 'red',
-        border: '2px solid red',
+        backgroundColor: 'white',
+        border: '2px solid white',
         borderRadius: '50%',
         cursor: 'pointer',
         zIndex: '3',
     });
-    seekBar.appendChild(thumb);
 
-    let isDragging = false;
-
-    function updatePosition(clientX: number) {
-        const rect = seekBar.getBoundingClientRect();
-        let pos = clientX - rect.left;
-        pos = Math.max(0, Math.min(pos, rect.width));
-        const percent = (pos / rect.width) * 100;
-        progressFill.style.width = `${percent}%`;
-        thumb.style.left = `${percent}%`;
-        const event = new CustomEvent('seek', {detail: percent});
-        seekBar.dispatchEvent(event);
-    }
-
-    thumb.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        e.preventDefault();
-    });
-
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (isDragging) updatePosition(e.clientX);
-    });
-
-    seekBar.addEventListener('click', (e) => {
-        updatePosition(e.clientX);
-    });
-
-    thumb.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        e.preventDefault();
-    }, {passive: false});
-
-    window.addEventListener('touchend', () => {
-        isDragging = false;
-    });
-
-    window.addEventListener('touchmove', (e) => {
-        if (isDragging && e.touches.length > 0) updatePosition(e.touches[0].clientX);
-    }, {passive: false});
+    seekBar.append(progressFill, thumb);
 
     (seekBar as any).setProgress = (percent: number) => {
         percent = Math.max(0, Math.min(100, percent));

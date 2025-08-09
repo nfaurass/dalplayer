@@ -14,6 +14,7 @@ import VolumeMaxSVG from "./svg/VolumeMax";
 import VolumeMutedSVG from "./svg/VolumeMuted";
 import VolumeLowSVG from "./svg/VolumeLow";
 import VolumeMediumSVG from "./svg/VolumeMedium";
+import {updatePosition} from "./utils/updatePosition";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -69,6 +70,7 @@ export class BaseUI {
         if (video) this.uiWrapper.appendChild(video);
         this.container.appendChild(this.uiWrapper);
 
+        // BottomControls
         const AllBottomControls = BottomControls();
         this.BottomControls = AllBottomControls.Bottom;
         this.BottomUpperLeftControls = AllBottomControls.BottomUpperLeft;
@@ -78,22 +80,39 @@ export class BaseUI {
 
         this.uiWrapper.appendChild(this.BottomControls);
 
+        // SeekBar
         this.SeekBar = SeekBarControl();
+        let isDragging = false;
+        this.SeekBar.addEventListener('pointerdown', e => {
+            isDragging = true;
+            updatePosition(e.clientX, this.SeekBar);
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        });
+        window.addEventListener('pointermove', e => {
+            if (isDragging) updatePosition(e.clientX, this.SeekBar);
+        });
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+        });
         this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
         this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
         this.BottomUpperLeftControls.appendChild(this.SeekBar);
 
+        // PlayPause
         this.PlayPause = PlayPauseControl();
         this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
         this.BottomLowerLeftControls.appendChild(this.PlayPause);
 
+        // Volume
         this.Volume = VolumeControl();
         this.Volume.addEventListener("click", () => this.player.toggleVolume());
         this.BottomLowerLeftControls.appendChild(this.Volume);
 
+        // TimeDisplay
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
 
+        // Fullscreen
         this.Fullscreen = FullscreenControl();
         this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
         this.BottomLowerRightControls.appendChild(this.Fullscreen);
