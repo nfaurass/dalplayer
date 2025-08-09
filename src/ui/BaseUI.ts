@@ -58,8 +58,9 @@ export class BaseUI {
         this.uiWrapper.id = "UIWRAPPER";
         Object.assign(this.uiWrapper.style, {
             position: 'relative',
-            display: 'inline-block',
+            display: 'inline-flex',
             width: '100%',
+            height: '100%',
             userSelect: 'none',
             WebkitUserSelect: 'none',
         });
