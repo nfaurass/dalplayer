@@ -9,6 +9,11 @@ import SeekBarControl from "./controls/SeekBar";
 import {BottomControls} from "./controls/Bottom";
 import TimeDisplayControl from "./controls/TimeDisplay";
 import {formatTime} from "./utils/formatTime";
+import VolumeControl from "./controls/Volume";
+import VolumeMaxSVG from "./svg/VolumeMax";
+import VolumeMutedSVG from "./svg/VolumeMuted";
+import VolumeLowSVG from "./svg/VolumeLow";
+import VolumeMediumSVG from "./svg/VolumeMedium";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -25,6 +30,7 @@ export class BaseUI {
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
+    private Volume!: HTMLButtonElement;
 
     private playerDuration: number = 0;
 
@@ -38,10 +44,12 @@ export class BaseUI {
         this.player.on('pause', () => this.updatePlayPauseButton());
         this.player.on('loadedmetadata', () => this.updateTimeDisplay());
         this.player.on('timeupdate', () => this.updateTimeDisplay());
+        this.player.on('volumechange', () => this.updateVolumeButton());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
         this.updateFullscreenToggleButton();
+        this.updateVolumeButton();
     }
 
     private createUI() {
@@ -76,6 +84,10 @@ export class BaseUI {
         this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
         this.BottomLowerLeftControls.appendChild(this.PlayPause);
 
+        this.Volume = VolumeControl();
+        this.Volume.addEventListener("click", () => this.player.toggleVolume());
+        this.BottomLowerLeftControls.appendChild(this.Volume);
+
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
 
@@ -96,6 +108,14 @@ export class BaseUI {
         if (!this.playerDuration) this.playerDuration = this.player.getDuration();
         if (this.playerDuration > 0) this.TimeDisplay.innerHTML = formatTime(this.player.getCurrentTime()) + " / " + formatTime(this.playerDuration);
         else setTimeout(() => this.updateTimeDisplay(), 500);
+    }
+
+    private updateVolumeButton() {
+        const volume = this.player.getVolume();
+        if (volume === 0 || this.player.isMuted()) this.Volume.innerHTML = VolumeMutedSVG();
+        else if (volume > 0 && volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
+        else if (volume >= 0.33 && volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
+        else this.Volume.innerHTML = VolumeMaxSVG();
     }
 
     destroy() {
