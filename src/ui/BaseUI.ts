@@ -60,6 +60,8 @@ export class BaseUI {
             position: 'relative',
             display: 'inline-block',
             width: '100%',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
         });
 
         const video = this.container.querySelector('video');

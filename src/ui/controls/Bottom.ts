@@ -1,5 +1,6 @@
 export function BottomControls() {
     const Bottom = document.createElement('div');
+    Bottom.id = 'BottomControls';
     Object.assign(Bottom.style, {
         width: "100%",
         height: "30%",
