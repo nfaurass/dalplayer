@@ -17,6 +17,7 @@ export class DALPlayer {
     private readonly video: HTMLVideoElement;
     private listeners: Record<string, Listener[]> = {};
     private readonly ui;
+    private previousVolume: number = 1;
 
     constructor(options: DALPlayerOptions) {
         this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
@@ -47,7 +48,7 @@ export class DALPlayer {
             }
         }
 
-        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata'].forEach(eventName => {
+        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange'].forEach(eventName => {
             this.video.addEventListener(eventName, (ev) => {
                 this.emit(eventName, ev);
             });
@@ -60,7 +61,15 @@ export class DALPlayer {
     }
 
     public setVolume(value: number): void {
-        this.video.volume = Math.max(0, Math.min(1, value));
+        const volume = Math.max(0, Math.min(1, value));
+        if (!volume) this.setMuted(true);
+        this.video.volume = volume;
+        this.previousVolume = volume;
+    }
+
+    public toggleVolume(): void {
+        if (this.isMuted()) this.setMuted(false);
+        else this.setMuted(true);
     }
 
     public setSeekPosition(percentage: number): void {
