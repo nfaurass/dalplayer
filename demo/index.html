@@ -19,6 +19,11 @@
     new DALPlayer({
         parent: document.getElementById("player") || "player",
         source: 'https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_30mb.mp4',
+        captions: {
+            src: './captions/en.vtt',
+            label: 'English',
+            lang: 'en'
+        },
         ui: true
     });
 </script>
