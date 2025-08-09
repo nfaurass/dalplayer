@@ -15,6 +15,7 @@ import VolumeMutedSVG from "./svg/VolumeMuted";
 import VolumeLowSVG from "./svg/VolumeLow";
 import VolumeMediumSVG from "./svg/VolumeMedium";
 import {updatePosition} from "./utils/updatePosition";
+import {throttle} from "./utils/throttle";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -156,7 +157,8 @@ export class BaseUI {
 
     // Shortcuts
     private addShortcuts() {
-        document.addEventListener('keydown', (e) => {
+        const throttledHandler = throttle((e: KeyboardEvent) => {
+            console.log(e);
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
             switch (e.code) {
@@ -193,8 +195,8 @@ export class BaseUI {
                     this.player.setVolume(Math.max(this.player.getVolume() - 0.1, 0));
                     break;
             }
-        });
-
+        }, 200);
+        document.addEventListener('keydown', throttledHandler);
     }
 
     destroy() {
