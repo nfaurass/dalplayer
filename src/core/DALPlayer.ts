@@ -48,7 +48,7 @@ export class DALPlayer {
             }
         }
 
-        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress'].forEach(eventName => {
+        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'].forEach(eventName => {
             this.video.addEventListener(eventName, (ev) => {
                 this.emit(eventName, ev);
             });

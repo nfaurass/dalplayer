@@ -15,7 +15,7 @@ import VolumeMutedSVG from "./svg/VolumeMuted";
 import VolumeLowSVG from "./svg/VolumeLow";
 import VolumeMediumSVG from "./svg/VolumeMedium";
 import {updatePosition} from "./utils/updatePosition";
-import {throttle} from "./utils/throttle";
+import LoadingSpinner from "./controls/LoadingSpinner";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -33,6 +33,7 @@ export class BaseUI {
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
     private Volume!: HTMLButtonElement;
+    private LoadingSpinner!: HTMLDivElement;
 
     private playerDuration: number = 0;
     private isDragging: boolean = false;
@@ -49,6 +50,10 @@ export class BaseUI {
         this.player.on('timeupdate', () => this.updateTimeDisplay());
         this.player.on('volumechange', () => this.updateVolumeButton());
         this.player.on('progress', () => this.updateBufferedProgress());
+        this.player.on('waiting', () => this.showLoadingSpinner());
+        this.player.on('playing', () => this.hideLoadingSpinner());
+        this.player.on('stalled', () => this.showLoadingSpinner());
+        this.player.on('canplay', () => this.hideLoadingSpinner());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
@@ -149,6 +154,18 @@ export class BaseUI {
         const bufferedEnd = this.player.getBufferedEnd();
         const duration = this.player.getDuration();
         if (duration > 0 && (this.SeekBar as any).setBuffered) (this.SeekBar as any).setBuffered((bufferedEnd / duration) * 100);
+    }
+
+    private showLoadingSpinner() {
+        if (!this.LoadingSpinner) {
+            this.LoadingSpinner = LoadingSpinner();
+            this.uiWrapper.prepend(this.LoadingSpinner);
+        }
+        this.LoadingSpinner.style.display = 'block';
+    }
+
+    private hideLoadingSpinner() {
+        if (this.LoadingSpinner) this.LoadingSpinner.style.display = 'none';
     }
 
     private hideUI(): void {
