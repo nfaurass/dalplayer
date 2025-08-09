@@ -165,8 +165,7 @@ export class BaseUI {
 
     // Shortcuts
     private addShortcuts() {
-        const throttledHandler = throttle((e: KeyboardEvent) => {
-            console.log(e);
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
             switch (e.code) {
@@ -203,8 +202,7 @@ export class BaseUI {
                     this.player.setVolume(Math.max(this.player.getVolume() - 0.1, 0));
                     break;
             }
-        }, 200);
-        document.addEventListener('keydown', throttledHandler);
+        });
     }
 
     destroy() {
