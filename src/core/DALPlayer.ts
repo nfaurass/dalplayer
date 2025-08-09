@@ -48,7 +48,7 @@ export class DALPlayer {
             }
         }
 
-        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange'].forEach(eventName => {
+        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress'].forEach(eventName => {
             this.video.addEventListener(eventName, (ev) => {
                 this.emit(eventName, ev);
             });
@@ -112,6 +112,17 @@ export class DALPlayer {
 
     public getContainer(): HTMLElement {
         return this.container;
+    }
+
+    public getBuffered(): TimeRanges | null {
+        return this.video.buffered.length > 0 ? this.video.buffered : null;
+    }
+
+    public getBufferedEnd(): number {
+        if (this.video.buffered.length === 0) return 0;
+        let bufferedEnd = 0;
+        for (let i = 0; i < this.video.buffered.length; i++) bufferedEnd = Math.max(bufferedEnd, this.video.buffered.end(i));
+        return bufferedEnd;
     }
 
     public isMuted(): boolean {

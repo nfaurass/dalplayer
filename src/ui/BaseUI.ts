@@ -48,11 +48,13 @@ export class BaseUI {
         this.player.on('loadedmetadata', () => this.updateTimeDisplay());
         this.player.on('timeupdate', () => this.updateTimeDisplay());
         this.player.on('volumechange', () => this.updateVolumeButton());
+        this.player.on('progress', () => this.updateBufferedProgress());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
         this.updateFullscreenToggleButton();
         this.updateVolumeButton();
+        this.updateBufferedProgress();
 
         this.addShortcuts();
     }
@@ -141,6 +143,12 @@ export class BaseUI {
         else if (volume > 0 && volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
         else if (volume >= 0.33 && volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
         else this.Volume.innerHTML = VolumeMaxSVG();
+    }
+
+    private updateBufferedProgress() {
+        const bufferedEnd = this.player.getBufferedEnd();
+        const duration = this.player.getDuration();
+        if (duration > 0 && (this.SeekBar as any).setBuffered) (this.SeekBar as any).setBuffered((bufferedEnd / duration) * 100);
     }
 
     private hideUI(): void {
