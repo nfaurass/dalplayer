@@ -4,13 +4,15 @@ type Listener = (...args: any[]) => void;
 
 type DALPlayerUIOptions = "Base" | "V1";
 
+type Caption = { src: string, label?: string, lang?: string };
+
 export interface DALPlayerOptions {
     parent: HTMLElement | string;
     source?: string;
     autoplay?: boolean;
     controls?: boolean;
     ui?: DALPlayerUIOptions;
-    captions?: { src: string, label?: string, lang?: string } | { src: string, label?: string, lang?: string }[];
+    captions?: Caption | Caption[];
 }
 
 export class DALPlayer {
@@ -36,6 +38,20 @@ export class DALPlayer {
             });
         }
 
+        if (options.captions) {
+            const captionsArray = Array.isArray(options.captions) ? options.captions : [options.captions];
+            captionsArray.forEach(({src, label = "Captions", lang = "en"}, index) => {
+                const track = document.createElement('track');
+                track.kind = "captions";
+                track.label = label;
+                track.srclang = lang;
+                track.src = src;
+                if (index == 0) track.default = true;
+                this.video.appendChild(track);
+            });
+            this.video.textTracks[0].mode = "showing";
+        }
+
         this.video.style.width = '100%';
         this.container.appendChild(this.video);
 
@@ -47,20 +63,6 @@ export class DALPlayer {
                 default:
                     this.ui = new BaseUI(this);
             }
-        }
-
-        if (options.captions) {
-            const captionsArray = Array.isArray(options.captions) ? options.captions : [options.captions];
-            captionsArray.forEach(({src, label = "Captions", lang = "en"}, index) => {
-                const track = document.createElement('track');
-                track.kind = "captions";
-                track.label = label;
-                track.srclang = lang;
-                track.src = src;
-                if (index === 0) track.default = true;
-                this.video.appendChild(track);
-            });
-            this.video.textTracks[0].mode = "showing";
         }
 
         ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'].forEach(eventName => {
@@ -154,6 +156,10 @@ export class DALPlayer {
 
     public isLooping(): boolean {
         return this.video.loop;
+    }
+
+    public isCaptions(): boolean {
+        return !!this.video.textTracks.length;
     }
 
     public play(): void {

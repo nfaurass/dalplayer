@@ -16,6 +16,7 @@ import VolumeLowSVG from "./svg/VolumeLow";
 import VolumeMediumSVG from "./svg/VolumeMedium";
 import {updatePosition} from "./utils/updatePosition";
 import LoadingSpinner from "./controls/LoadingSpinner";
+import CaptionsControl from "./controls/Captions";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -29,6 +30,7 @@ export class BaseUI {
     private BottomLowerLeftControls!: HTMLDivElement;
     private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
+    private Captions!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
@@ -121,6 +123,13 @@ export class BaseUI {
         // TimeDisplay
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
+
+        // Captions
+        if (this.player.isCaptions()) {
+            this.Captions = CaptionsControl();
+            this.Captions.addEventListener("click", () => console.log("Captions clicked"));
+            this.BottomLowerRightControls.appendChild(this.Captions);
+        }
 
         // Fullscreen
         this.Fullscreen = FullscreenControl();
