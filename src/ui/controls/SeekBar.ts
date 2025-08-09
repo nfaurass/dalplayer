@@ -8,7 +8,6 @@ export default function SeekBarControl(): HTMLDivElement {
         backgroundColor: 'rgba(255, 255, 255, 0.3)',
         cursor: 'pointer',
         userSelect: 'none',
-        borderRadius: '5px',
         boxSizing: 'border-box',
         zIndex: '2'
     });
@@ -21,7 +20,6 @@ export default function SeekBarControl(): HTMLDivElement {
         height: '100%',
         width: '0%',
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        borderRadius: '5px',
         zIndex: '1',
     });
 
@@ -33,7 +31,6 @@ export default function SeekBarControl(): HTMLDivElement {
         height: '100%',
         width: '0%',
         backgroundColor: 'white',
-        transition: 'width 0s linear'
     });
 
     const thumb = document.createElement('div');
