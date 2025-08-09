@@ -1,4 +1,5 @@
 import type {DALPlayer} from '../core/DALPlayer';
+import Styles from "./styles.css";
 import PlayPauseControl from "./controls/PlayPause";
 import PlaySVG from "./svg/Play";
 import PauseSVG from "./svg/Pause";
@@ -67,6 +68,11 @@ export class BaseUI {
     }
 
     private createUI() {
+
+        // Inject CSS
+        const styleSheet = document.createElement('style');
+        styleSheet.innerHTML = Styles;
+        this.uiWrapper.prepend(styleSheet);
 
         // Wrapper
         this.uiWrapper.id = "UIWRAPPER";
