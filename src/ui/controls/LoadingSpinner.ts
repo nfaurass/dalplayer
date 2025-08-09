@@ -16,16 +16,5 @@ export default function LoadingSpinner() {
         boxSizing: 'border-box',
         zIndex: '10',
     });
-
-    const styleSheet = document.createElement('style');
-    styleSheet.type = 'text/css';
-    styleSheet.innerText = `
-        @keyframes DALPlayerSpin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(styleSheet);
-
     return LoadingSpinner;
 }
