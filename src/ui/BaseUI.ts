@@ -34,6 +34,7 @@ export class BaseUI {
     private Volume!: HTMLButtonElement;
 
     private playerDuration: number = 0;
+    private isDragging: boolean = false;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -82,17 +83,16 @@ export class BaseUI {
 
         // SeekBar
         this.SeekBar = SeekBarControl();
-        let isDragging = false;
         this.SeekBar.addEventListener('pointerdown', e => {
-            isDragging = true;
+            this.isDragging = true;
             updatePosition(e.clientX, this.SeekBar);
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
         });
         window.addEventListener('pointermove', e => {
-            if (isDragging) updatePosition(e.clientX, this.SeekBar);
+            if (this.isDragging) updatePosition(e.clientX, this.SeekBar);
         });
         window.addEventListener('pointerup', () => {
-            isDragging = false;
+            this.isDragging = false;
         });
         this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
         this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
@@ -138,6 +138,18 @@ export class BaseUI {
         else if (volume > 0 && volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
         else if (volume >= 0.33 && volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
         else this.Volume.innerHTML = VolumeMaxSVG();
+    }
+
+    private hideUI(): void {
+        this.BottomControls.style.opacity = '0';
+        this.BottomControls.style.pointerEvents = 'none';
+        this.BottomControls.style.transition = 'opacity 0.5s ease';
+    }
+
+    private showUI(): void {
+        this.BottomControls.style.opacity = '1';
+        this.BottomControls.style.pointerEvents = 'auto';
+        this.BottomControls.style.transition = 'opacity 0.5s ease';
     }
 
     destroy() {
