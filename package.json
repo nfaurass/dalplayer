@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --sourcemap --minify --format=iife --outfile=dist/dalplayer.js --target=es2017",
-    "build:dev": "esbuild src/index.ts --bundle --sourcemap --format=iife --outfile=dist/dalplayer.js --target=es2017 --watch",
-    "build:esm": "esbuild src/index.ts --bundle --sourcemap --format=esm --outfile=dist/dalplayer.esm.js --target=es2017",
+    "build": "esbuild src/index.ts --bundle --sourcemap --minify --format=iife --outfile=dist/dalplayer.js --target=es2017 --loader:.css=text",
+    "build:dev": "esbuild src/index.ts --bundle --sourcemap --format=iife --outfile=dist/dalplayer.js --target=es2017 --watch --loader:.css=text",
+    "build:esm": "esbuild src/index.ts --bundle --sourcemap --format=esm --outfile=dist/dalplayer.esm.js --target=es2017 --loader:.css=text",
     "types": "tsc --emitDeclarationOnly",
     "clean": "rm -rf dist"
   },
