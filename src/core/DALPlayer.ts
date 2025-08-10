@@ -159,6 +159,10 @@ export class DALPlayer {
         return this.video.loop;
     }
 
+    public isPiP(): boolean {
+        return document.pictureInPictureElement === this.video;
+    }
+
     public isCaptions(): boolean {
         return !!this.video.textTracks.length;
     }
@@ -191,6 +195,34 @@ export class DALPlayer {
     public toggleLoop(): void {
         this.video.loop = !this.video.loop;
         this.emit('loop', this.video.loop);
+    }
+
+    public async enterPiP(): Promise<void> {
+        try {
+            if (document.pictureInPictureEnabled && this.video !== document.pictureInPictureElement) {
+                await this.video.requestPictureInPicture();
+                this.emit('enterPiP');
+            }
+        } catch (err) {
+            console.error('Failed to enter PiP:', err);
+        }
+    }
+
+    public async exitPiP(): Promise<void> {
+        try {
+            if (document.pictureInPictureElement === this.video) {
+                await document.exitPictureInPicture();
+                this.emit('exitPiP');
+            }
+        } catch (err) {
+            console.error('Failed to exit PiP:', err);
+        }
+    }
+
+    public async togglePip(): Promise<void> {
+        if (this.isPiP()) await this.exitPiP();
+        else await this.enterPiP();
+        this.emit('pip', this.isPiP());
     }
 
     public destroy(): void {
