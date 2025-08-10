@@ -13,6 +13,7 @@ export interface DALPlayerOptions {
     controls?: boolean;
     ui?: DALPlayerUIOptions;
     captions?: Caption | Caption[];
+    poster?: string;
 }
 
 export class DALPlayer {
@@ -21,6 +22,7 @@ export class DALPlayer {
     private listeners: Record<string, Listener[]> = {};
     private readonly ui;
     private previousVolume: number = 1;
+    private poster: string = "";
 
     constructor(options: DALPlayerOptions) {
         this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
@@ -30,6 +32,8 @@ export class DALPlayer {
 
         this.video = document.createElement('video');
         this.video.controls = options.controls ?? false;
+
+        if (options.poster) this.poster = options.poster;
 
         if (options.autoplay) {
             this.video.muted = true;
@@ -75,6 +79,11 @@ export class DALPlayer {
     public setSource(src: string): void {
         this.video.src = src;
         this.video.load();
+    }
+
+    public setPoster(poster: string): void {
+        this.poster = poster;
+        this.emit("poster", poster);
     }
 
     public setVolume(value: number): void {
@@ -143,6 +152,10 @@ export class DALPlayer {
         return bufferedEnd;
     }
 
+    public getPoster(): string {
+        return this.poster ?? "";
+    }
+
     public isMuted(): boolean {
         return this.video.muted;
     }
@@ -153,6 +166,10 @@ export class DALPlayer {
 
     public isPlaying(): boolean {
         return !this.video.paused && !this.video.ended && this.video.readyState > 2;
+    }
+
+    public isPoster(): boolean {
+        return !!this.poster;
     }
 
     public isLooping(): boolean {
