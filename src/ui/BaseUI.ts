@@ -247,6 +247,11 @@ export class BaseUI {
                     e.preventDefault();
                     this.player.setVolume(Math.max(this.player.getVolume() - 0.1, 0));
                     break;
+                // Loop
+                case 'KeyL':
+                    e.preventDefault();
+                    this.player.toggleLoop();
+                    break;
             }
         });
     }
