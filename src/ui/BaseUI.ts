@@ -18,6 +18,9 @@ import VolumeMediumSVG from "./svg/VolumeMedium";
 import {updatePosition} from "./utils/updatePosition";
 import LoadingSpinner from "./controls/LoadingSpinner";
 import CaptionsControl from "./controls/Captions";
+import LoopControl from "./controls/Loop";
+import LoopExistSVG from "./svg/LoopExit";
+import LoopSVG from "./svg/Loop";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -32,6 +35,7 @@ export class BaseUI {
     private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Captions!: HTMLButtonElement;
+    private Loop!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
@@ -57,6 +61,7 @@ export class BaseUI {
         this.player.on('playing', () => this.hideLoadingSpinner());
         this.player.on('stalled', () => this.showLoadingSpinner());
         this.player.on('canplay', () => this.hideLoadingSpinner());
+        this.player.on('loop', () => this.updateLoopButton());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
@@ -130,6 +135,11 @@ export class BaseUI {
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
 
+        // Loop
+        this.Loop = LoopControl();
+        this.Loop.addEventListener("click", () => this.player.toggleLoop());
+        this.BottomLowerRightControls.appendChild(this.Loop);
+
         // Captions
         if (this.player.isCaptions()) {
             this.Captions = CaptionsControl();
@@ -169,6 +179,10 @@ export class BaseUI {
         const bufferedEnd = this.player.getBufferedEnd();
         const duration = this.player.getDuration();
         if (duration > 0 && (this.SeekBar as any).setBuffered) (this.SeekBar as any).setBuffered((bufferedEnd / duration) * 100);
+    }
+
+    private updateLoopButton() {
+        this.Loop.innerHTML = this.player.isLooping() ? LoopExistSVG() : LoopSVG();
     }
 
     private showLoadingSpinner() {
