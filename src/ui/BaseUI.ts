@@ -49,6 +49,8 @@ export class BaseUI {
 
     private playerDuration: number = 0;
     private isDragging: boolean = false;
+    private hideControlsTimeoutId?: number;
+    private inactivityDelay = 1500;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -56,9 +58,9 @@ export class BaseUI {
 
         this.createUI();
 
-        this.player.on('play', () => (this.hidePoster(), this.updatePlayPauseButton()));
+        this.player.on('play', () => (this.hidePoster(), this.updatePlayPauseButton(), this.scheduleHideControls()));
         this.player.on('ended', () => this.showPoster());
-        this.player.on('pause', () => this.updatePlayPauseButton());
+        this.player.on('pause', () => (this.updatePlayPauseButton(), this.showUI()));
         this.player.on('loadedmetadata', () => this.updateTimeDisplay());
         this.player.on('timeupdate', () => this.updateTimeDisplay());
         this.player.on('volumechange', () => this.updateVolumeButton());
@@ -70,6 +72,9 @@ export class BaseUI {
         this.player.on('loop', () => this.updateLoopButton());
         this.player.on('pip', () => this.updatePiPButton());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
+        this.uiWrapper.addEventListener('mousemove', () => this.resetTimer());
+        this.uiWrapper.addEventListener('touchstart', () => this.resetTimer());
+        this.uiWrapper.addEventListener('keydown', () => this.resetTimer());
 
         this.updatePlayPauseButton();
         this.updateFullscreenToggleButton();
@@ -77,6 +82,8 @@ export class BaseUI {
         this.updateBufferedProgress();
 
         this.addShortcuts();
+
+        if (!this.player.isPaused()) this.scheduleHideControls();
     }
 
     private createUI() {
@@ -242,6 +249,18 @@ export class BaseUI {
             this.uiPoster.style.opacity = '1';
             this.uiPoster.style.pointerEvents = 'auto';
         }
+    }
+
+    private scheduleHideControls() {
+        if (this.hideControlsTimeoutId) clearTimeout(this.hideControlsTimeoutId);
+        this.hideControlsTimeoutId = window.setTimeout(() => {
+            if (!this.player.isPaused() && !this.isDragging) this.hideUI();
+        }, this.inactivityDelay);
+    }
+
+    private resetTimer() {
+        this.showUI();
+        this.scheduleHideControls();
     }
 
     // Shortcuts
