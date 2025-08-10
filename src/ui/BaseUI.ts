@@ -30,6 +30,7 @@ export class BaseUI {
 
     private container: HTMLElement;
     private uiWrapper: HTMLDivElement = document.createElement('div');
+    private uiPoster!: HTMLDivElement;
 
     private BottomControls!: HTMLDivElement;
     private BottomUpperLeftControls!: HTMLDivElement;
@@ -55,7 +56,8 @@ export class BaseUI {
 
         this.createUI();
 
-        this.player.on('play', () => this.updatePlayPauseButton());
+        this.player.on('play', () => (this.hidePoster(), this.updatePlayPauseButton()));
+        this.player.on('ended', () => this.showPoster());
         this.player.on('pause', () => this.updatePlayPauseButton());
         this.player.on('loadedmetadata', () => this.updateTimeDisplay());
         this.player.on('timeupdate', () => this.updateTimeDisplay());
@@ -90,6 +92,19 @@ export class BaseUI {
         const video = this.container.querySelector('video');
         if (video) this.uiWrapper.appendChild(video);
         this.container.appendChild(this.uiWrapper);
+
+        // Poster
+        if (this.player.isPoster()) {
+            this.uiPoster = document.createElement("div");
+            this.uiPoster.className = "DALPlayer-poster";
+            this.uiPoster.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 5%, transparent 100%), url(${this.player.getPoster()})`;
+            const posterPlayButton = document.createElement("button");
+            posterPlayButton.className = "DALPlayer-poster-play-button";
+            posterPlayButton.innerHTML = PlaySVG();
+            posterPlayButton.addEventListener("click", () => this.player.play());
+            this.uiPoster.appendChild(posterPlayButton);
+            this.uiWrapper.appendChild(this.uiPoster);
+        }
 
         // BottomControls
         const AllBottomControls = BottomControls();
@@ -213,6 +228,20 @@ export class BaseUI {
         this.BottomControls.style.opacity = '1';
         this.BottomControls.style.pointerEvents = 'auto';
         this.BottomControls.style.transition = 'opacity 0.5s ease';
+    }
+
+    private hidePoster() {
+        if (this.uiPoster) {
+            this.uiPoster.style.opacity = '0';
+            this.uiPoster.style.pointerEvents = 'none';
+        }
+    }
+
+    private showPoster() {
+        if (this.uiPoster) {
+            this.uiPoster.style.opacity = '1';
+            this.uiPoster.style.pointerEvents = 'auto';
+        }
     }
 
     // Shortcuts
