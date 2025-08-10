@@ -21,6 +21,9 @@ import CaptionsControl from "./controls/Captions";
 import LoopControl from "./controls/Loop";
 import LoopExistSVG from "./svg/LoopExit";
 import LoopSVG from "./svg/Loop";
+import PiPControl from "./controls/PiP";
+import PiPExitSVG from "./svg/PiPExit";
+import PiPSVG from "./svg/PiP";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -36,6 +39,7 @@ export class BaseUI {
     private PlayPause!: HTMLButtonElement;
     private Captions!: HTMLButtonElement;
     private Loop!: HTMLButtonElement;
+    private PiP!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
@@ -62,6 +66,7 @@ export class BaseUI {
         this.player.on('stalled', () => this.showLoadingSpinner());
         this.player.on('canplay', () => this.hideLoadingSpinner());
         this.player.on('loop', () => this.updateLoopButton());
+        this.player.on('pip', () => this.updatePiPButton());
         document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
 
         this.updatePlayPauseButton();
@@ -135,6 +140,11 @@ export class BaseUI {
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
 
+        // PiP
+        this.PiP = PiPControl();
+        this.PiP.addEventListener("click", () => this.player.togglePip());
+        this.BottomLowerRightControls.appendChild(this.PiP);
+
         // Loop
         this.Loop = LoopControl();
         this.Loop.addEventListener("click", () => this.player.toggleLoop());
@@ -183,6 +193,10 @@ export class BaseUI {
 
     private updateLoopButton() {
         this.Loop.innerHTML = this.player.isLooping() ? LoopExistSVG() : LoopSVG();
+    }
+
+    private updatePiPButton() {
+        this.PiP.innerHTML = this.player.isPiP() ? PiPExitSVG() : PiPSVG();
     }
 
     private showLoadingSpinner() {
@@ -251,6 +265,11 @@ export class BaseUI {
                 case 'KeyL':
                     e.preventDefault();
                     this.player.toggleLoop();
+                    break;
+                // PiP
+                case 'KeyP':
+                    e.preventDefault();
+                    this.player.togglePip();
                     break;
             }
         });
