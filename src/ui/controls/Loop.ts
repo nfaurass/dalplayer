@@ -4,8 +4,6 @@ export default function LoopControl(): HTMLButtonElement {
     const LoopControl = document.createElement('button');
     LoopControl.id = "LoopControl";
     LoopControl.innerHTML = LoopSVG();
-    LoopControl.style.border = "none";
-    LoopControl.style.outline = "none";
-    LoopControl.style.backgroundColor = "transparent";
+    LoopControl.className = "DALPlayer-button";
     return LoopControl;
 }

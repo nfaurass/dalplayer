@@ -85,15 +85,7 @@ export class BaseUI {
         this.uiWrapper.prepend(styleSheet);
 
         // Wrapper
-        this.uiWrapper.id = "UIWRAPPER";
-        Object.assign(this.uiWrapper.style, {
-            position: 'relative',
-            display: 'inline-flex',
-            width: '100%',
-            height: '100%',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-        });
+        this.uiWrapper.id = "DALPlayer-ui-wrapper";
 
         const video = this.container.querySelector('video');
         if (video) this.uiWrapper.appendChild(video);

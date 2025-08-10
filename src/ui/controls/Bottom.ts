@@ -1,73 +1,25 @@
 export function BottomControls() {
     const Bottom = document.createElement('div');
     Bottom.id = 'BottomControls';
-    Object.assign(Bottom.style, {
-        width: "100%",
-        height: "30%",
-        backgroundImage: "linear-gradient(to top, black 5%, black 5%, transparent 100%)",
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        minHeight: "80px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
-        gap: "15px",
-        padding: "2% 2%",
-        boxSizing: "border-box"
-    });
+    Bottom.className = "DALPlayer-bottom";
 
     const BottomUpper = document.createElement('div');
-    Object.assign(BottomUpper.style, {
-        display: "flex",
-        justifyContent: "flex-start",
-        alignItems: "center",
-        width: "100%",
-        gap: "10px"
-    });
+    BottomUpper.className = "DALPlayer-bottom-upper";
 
     const BottomLower = document.createElement('div');
-    Object.assign(BottomLower.style, {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        width: "100%"
-    });
+    BottomLower.className = "DALPlayer-bottom-lower";
 
     const BottomLowerLeft = document.createElement('div');
-    Object.assign(BottomLowerLeft.style, {
-        display: "flex",
-        justifyContent: "flex-start",
-        alignItems: "center",
-        gap: "20px",
-        width: "50%"
-    });
+    BottomLowerLeft.className = "DALPlayer-bottom-lower-left";
 
     const BottomLowerRight = document.createElement('div');
-    Object.assign(BottomLowerRight.style, {
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        gap: "20px",
-        width: "50%"
-    });
+    BottomLowerRight.className = "DALPlayer-bottom-lower-right";
 
     const BottomUpperLeft = document.createElement('div');
-    Object.assign(BottomUpperLeft.style, {
-        display: "flex",
-        justifyContent: "flex-start",
-        alignItems: "center",
-        width: "100%"
-    });
+    BottomUpperLeft.className = "DALPlayer-bottom-upper-left";
 
     // const BottomUpperRight = document.createElement('div');
-    // Object.assign(BottomUpperRight.style, {
-    //     display: "flex",
-    //     justifyContent: "flex-end",
-    //     alignItems: "center",
-    //     width: "0"
-    // });
+    // BottomUpperRight.className = "DALPlayer-bottom-upper-right";
 
     BottomLower.appendChild(BottomLowerLeft);
     BottomLower.appendChild(BottomLowerRight);

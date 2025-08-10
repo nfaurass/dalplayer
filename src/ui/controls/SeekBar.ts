@@ -1,51 +1,16 @@
 export default function SeekBarControl(): HTMLDivElement {
     const seekBar = document.createElement('div');
     seekBar.id = 'seekBar';
-    Object.assign(seekBar.style, {
-        position: 'relative',
-        width: '100%',
-        height: '5px',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        cursor: 'pointer',
-        userSelect: 'none',
-        boxSizing: 'border-box',
-        zIndex: '2'
-    });
+    seekBar.classList.add('DALPlayer-seekbar');
 
     const bufferedFill = document.createElement('div');
-    Object.assign(bufferedFill.style, {
-        position: 'absolute',
-        left: '0',
-        top: '0',
-        height: '100%',
-        width: '0%',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        zIndex: '1',
-    });
+    bufferedFill.classList.add('DALPlayer-buffered-fill');
 
     const progressFill = document.createElement('div');
-    Object.assign(progressFill.style, {
-        position: 'absolute',
-        left: '0',
-        top: '0',
-        height: '100%',
-        width: '0%',
-        backgroundColor: 'white',
-    });
+    progressFill.classList.add('DALPlayer-progress-fill');
 
     const thumb = document.createElement('div');
-    Object.assign(thumb.style, {
-        position: 'absolute',
-        top: '-2.5px',
-        left: '0px',
-        width: '10px',
-        height: '10px',
-        backgroundColor: 'white',
-        border: '2px solid white',
-        borderRadius: '50%',
-        cursor: 'pointer',
-        zIndex: '3',
-    });
+    thumb.classList.add('DALPlayer-thumb');
 
     seekBar.append(bufferedFill, progressFill, thumb);
 
