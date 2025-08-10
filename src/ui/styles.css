@@ -1,4 +1,13 @@
 #DALPlayer-ui-wrapper {
+    --DALPlayer-white: #ffffff;
+    --DALPlayer-white-80: #ffffffcc;
+    --DALPlayer-white-50: #ffffff7f;
+    --DALPlayer-white-30: #ffffff4c;
+    --DALPlayer-black: #000000;
+    --DALPlayer-black-overlay: #00000075;
+    --DALPlayer-black-overlay-hover: #000000af;
+    --DALPlayer-transition-fast: 0.1s ease-in-out;
+    --DALPlayer-transition-slow: 0.3s ease-in-out;
     position: relative;
     display: inline-flex;
     width: 100%;
@@ -11,22 +20,30 @@
     border: none;
     outline: none;
     background: transparent;
+    opacity: 0.8;
+    transition: all var(--DALPlayer-transition-fast);
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+.DALPlayer-button:hover, .DALPlayer-button:active {
+    opacity: 1;
 }
 
 .DALPlayer-time-display {
     border: none;
     outline: none;
-    font-size: 1em;
-    color: #ffffffdd;
+    font-size: 1rem;
+    color: var(--DALPlayer-white-80);
     background: transparent;
 }
 
 .DALPlayer-spinner {
-    width: 70px;
-    height: 70px;
-    border: 6px solid transparent;
-    border-top-color: white;
-    border-right-color: white;
+    width: 4.375rem; /* ~70px */
+    height: 4.375rem;
+    border: 0.375rem solid transparent; /* ~6px */
+    border-top-color: var(--DALPlayer-white);
+    border-right-color: var(--DALPlayer-white);
     border-radius: 50%;
     animation: DALPlayerSpin 1s linear infinite;
     position: absolute;
@@ -40,16 +57,16 @@
 .DALPlayer-bottom {
     width: 100%;
     height: 30%;
-    background-image: linear-gradient(to top, black 5%, black 5%, transparent 100%);
+    background-image: linear-gradient(to top, var(--DALPlayer-black) 5%, var(--DALPlayer-black) 5%, transparent 100%);
     position: absolute;
     bottom: 0;
     left: 0;
-    min-height: 80px;
+    min-height: 5rem; /* ~80px */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    gap: 15px;
+    gap: 1rem;
     padding: 2% 2%;
     box-sizing: border-box;
 }
@@ -59,7 +76,7 @@
     justify-content: flex-start;
     align-items: center;
     width: 100%;
-    gap: 10px;
+    gap: 0.625rem; /* ~10px */
 }
 
 .DALPlayer-bottom-lower {
@@ -74,7 +91,7 @@
     justify-content: flex-start;
     align-items: center;
     width: 50%;
-    gap: 20px;
+    gap: 1.25rem; /* ~20px */
 }
 
 .DALPlayer-bottom-lower-right {
@@ -82,7 +99,7 @@
     justify-content: flex-end;
     align-items: center;
     width: 50%;
-    gap: 20px;
+    gap: 1.25rem;
 }
 
 .DALPlayer-bottom-upper-left {
@@ -95,12 +112,18 @@
 .DALPlayer-seekbar {
     position: relative;
     width: 100%;
-    height: 5px;
-    background-color: #FFFFFF4C;
+    height: 0.5rem; /* ~8px */
+    background-color: var(--DALPlayer-white-30);
     cursor: pointer;
     user-select: none;
     box-sizing: border-box;
     z-index: 2;
+    opacity: 0.8;
+    transition: all var(--DALPlayer-transition-fast);
+}
+
+.DALPlayer-seekbar:hover, .DALPlayer-seekbar:active {
+    opacity: 1;
 }
 
 .DALPlayer-buffered-fill {
@@ -109,7 +132,7 @@
     top: 0;
     height: 100%;
     width: 0%;
-    background-color: #FFFFFF7F;
+    background-color: var(--DALPlayer-white-50);
     z-index: 1;
 }
 
@@ -119,20 +142,26 @@
     top: 0;
     height: 100%;
     width: 0;
-    background-color: white;
+    background-color: var(--DALPlayer-white);
 }
 
 .DALPlayer-thumb {
     position: absolute;
-    top: -2.5px;
-    left: 0;
-    width: 10px;
-    height: 10px;
-    background-color: white;
-    border: 2px solid white;
+    top: 50%;
+    left: 0%;
+    width: 0.875rem; /* ~14px */
+    height: 0.875rem;
+    background-color: var(--DALPlayer-white);
     border-radius: 50%;
-    cursor: pointer;
+    transform: translate(-50%, -50%) scale(1);
+    transition: transform var(--DALPlayer-transition-fast);
     z-index: 3;
+    pointer-events: auto;
+    box-shadow: 0 0 2px var(--DALPlayer-black-overlay);
+}
+
+.DALPlayer-thumb:hover, .DALPlayer-thumb:active {
+    transform: translate(-50%, -50%) scale(1.2);
 }
 
 .DALPlayer-poster {
@@ -143,6 +172,7 @@
     background-size: 100% 30%, cover;
     background-repeat: no-repeat, no-repeat;
     background-position: bottom, center;
+    transition: all var(--DALPlayer-transition-slow);
 }
 
 .DALPlayer-poster-play-button {
@@ -155,9 +185,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #00000075;
+    background: var(--DALPlayer-black-overlay);
     border-radius: 50%;
-    padding: 20px;
+    padding: 1.25rem; /* ~20px */
+    transition: all var(--DALPlayer-transition-slow);
+}
+
+.DALPlayer-poster-play-button:hover, .DALPlayer-poster-play-button:active {
+    background: var(--DALPlayer-black-overlay-hover);
 }
 
 @keyframes DALPlayerSpin {
