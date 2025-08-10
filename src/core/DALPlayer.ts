@@ -105,6 +105,7 @@ export class DALPlayer {
 
     public setLoop(loop: boolean): void {
         this.video.loop = loop;
+        this.emit('loop', loop);
     }
 
     public getCurrentTime(): number {
@@ -185,6 +186,11 @@ export class DALPlayer {
     public toggleFullscreen(): void {
         if (this.isFullscreen()) document.exitFullscreen();
         else this.enterFullscreen();
+    }
+
+    public toggleLoop(): void {
+        this.video.loop = !this.video.loop;
+        this.emit('loop', this.video.loop);
     }
 
     public destroy(): void {
