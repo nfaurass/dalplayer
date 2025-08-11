@@ -227,6 +227,22 @@
     padding: 0;
 }
 
+.DALPlayer-playback-text {
+    position: absolute;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--DALPlayer-white);
+    background: var(--DALPlayer-black-overlay);
+    padding: 0.3em 0.8em;
+    border-radius: 10px;
+    letter-spacing: 2px;
+}
+
 @keyframes DALPlayerSpin {
     0% {
         transform: translate(-50%, -50%) rotate(0deg);
