@@ -317,6 +317,17 @@ export class BaseUI {
         document.addEventListener('keydown', (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+            if (isSpaceKeyLongPressed && e.code !== 'Space') {
+                this.doublePlaybackSpeed(false);
+                isSpaceKeyLongPressed = false;
+                if (spaceKeyPressTimer !== null) {
+                    clearTimeout(spaceKeyPressTimer);
+                    spaceKeyPressTimer = null;
+                }
+                isSpaceKeyDown = false;
+            }
+
             switch (e.code) {
                 // Play/Pause
                 case 'Space':
