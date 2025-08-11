@@ -55,6 +55,7 @@
 }
 
 .DALPlayer-bottom {
+    z-index: 10;
     width: 100%;
     height: 30%;
     background-image: linear-gradient(to top, var(--DALPlayer-black) 5%, var(--DALPlayer-black) 5%, transparent 100%);
@@ -193,6 +194,37 @@
 
 .DALPlayer-poster-play-button:hover, .DALPlayer-poster-play-button:active {
     background: var(--DALPlayer-black-overlay-hover);
+}
+
+.DALPlayer-captions {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+}
+
+.DALPlayer-captions-container {
+    width: 60%;
+    margin: auto auto 8% auto;
+    text-align: center;
+}
+
+.DALPlayer-captions-text {
+    display: inline-block;
+    font-weight: bold;
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    line-height: normal;
+    color: var(--DALPlayer-white);
+    white-space: pre-wrap;
+}
+
+.DALPlayer-captions-text:empty {
+    display: none;
+    background: none;
+    padding: 0;
 }
 
 @keyframes DALPlayerSpin {
