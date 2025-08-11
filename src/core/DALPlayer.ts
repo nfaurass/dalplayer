@@ -44,16 +44,14 @@ export class DALPlayer {
 
         if (options.captions) {
             const captionsArray = Array.isArray(options.captions) ? options.captions : [options.captions];
-            captionsArray.forEach(({src, label = "Captions", lang = "en"}, index) => {
+            captionsArray.forEach(({src, label, lang = "en"}, index) => {
                 const track = document.createElement('track');
                 track.kind = "captions";
-                track.label = label;
+                track.label = label || "Captions " + (index + 1).toString();
                 track.srclang = lang;
                 track.src = src;
-                if (index == 0) track.default = true;
                 this.video.appendChild(track);
             });
-            this.video.textTracks[0].mode = "showing";
         }
 
         this.video.style.width = '100%';
@@ -117,6 +115,19 @@ export class DALPlayer {
         this.emit('loop', loop);
     }
 
+    public setSelectedCaption(captionLabel: string): void {
+        const textTracks = this.video.textTracks;
+        for (let i = 0; i < textTracks.length; i++) {
+            if (textTracks[i].label === captionLabel) {
+                textTracks[i].mode = "hidden";
+                textTracks[i].addEventListener('cuechange', () => this.emit('caption-cuechange', textTracks[i].activeCues));
+            } else {
+                textTracks[i].mode = "disabled";
+                textTracks[i].removeEventListener('cuechange', () => this.emit('caption-cuechange', textTracks[i].activeCues));
+            }
+        }
+    }
+
     public getCurrentTime(): number {
         return this.video.currentTime;
     }
@@ -154,6 +165,23 @@ export class DALPlayer {
 
     public getPoster(): string {
         return this.poster ?? "";
+    }
+
+    public getSelectedCaptionTrack(): TextTrack | null {
+        const textTracks = this.video.textTracks;
+        for (let i = 0; i < textTracks.length; i++) if (textTracks[i].mode === "hidden") return textTracks[i] || null;
+        return null;
+    }
+
+    public getVideoMetadata(): { cW: number, cH: number, vW: number, vH: number, W: number, H: number } {
+        return {
+            cW: this.video.clientWidth,
+            cH: this.video.clientHeight,
+            vW: this.video.videoWidth,
+            vH: this.video.videoHeight,
+            W: this.video.width,
+            H: this.video.height
+        }
     }
 
     public isMuted(): boolean {
