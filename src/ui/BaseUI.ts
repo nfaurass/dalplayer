@@ -24,6 +24,7 @@ import LoopSVG from "./svg/Loop";
 import PiPControl from "./controls/PiP";
 import PiPExitSVG from "./svg/PiPExit";
 import PiPSVG from "./svg/PiP";
+import DoubleSpeedSVG from "./svg/DoubleSpeed";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -48,6 +49,7 @@ export class BaseUI {
     private LoadingSpinner!: HTMLDivElement;
 
     private CaptionsText: HTMLSpanElement = document.createElement('span');
+    private PlaybackText!: HTMLSpanElement;
 
     private playerDuration: number = 0;
     private isDragging: boolean = false;
@@ -292,8 +294,25 @@ export class BaseUI {
         this.CaptionsText.style.fontSize = `${this.player.getVideoMetadata().cH * 0.04}px`;
     }
 
+    private doublePlaybackSpeed(double: boolean) {
+        if (double) {
+            this.PlaybackText = document.createElement('span');
+            this.PlaybackText.className = "DALPlayer-playback-text"
+            this.PlaybackText.innerHTML = "2x" + DoubleSpeedSVG();
+            this.uiWrapper.appendChild(this.PlaybackText);
+            this.player.setPlaybackRate(2);
+        } else {
+            this.player.setPlaybackRate(1);
+            if (this.PlaybackText) this.PlaybackText.remove();
+        }
+    }
+
     // Shortcuts
     private addShortcuts() {
+        let spaceKeyPressTimer: number | null = null;
+        let isSpaceKeyLongPressed = false;
+        let isSpaceKeyDown = true;
+
         document.addEventListener('keydown', (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
@@ -301,7 +320,13 @@ export class BaseUI {
                 // Play/Pause
                 case 'Space':
                     e.preventDefault();
-                    this.player.togglePlayPause();
+                    if (!isSpaceKeyDown) {
+                        isSpaceKeyDown = true;
+                        spaceKeyPressTimer = window.setTimeout(() => {
+                            this.doublePlaybackSpeed(true);
+                            isSpaceKeyLongPressed = true;
+                        }, 500);
+                    }
                     break;
                 // Seek
                 case 'ArrowRight':
@@ -342,6 +367,27 @@ export class BaseUI {
                     break;
             }
         });
+
+        document.addEventListener('keyup', (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+            switch (e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    if (!isSpaceKeyLongPressed) this.player.togglePlayPause();
+                    if (isSpaceKeyLongPressed) {
+                        this.doublePlaybackSpeed(false);
+                        isSpaceKeyLongPressed = false;
+                    }
+                    if (spaceKeyPressTimer !== null) {
+                        clearTimeout(spaceKeyPressTimer);
+                        spaceKeyPressTimer = null;
+                    }
+                    isSpaceKeyDown = false;
+                    break;
+            }
+        });
+
     }
 
     destroy() {
