@@ -295,7 +295,7 @@ export class BaseUI {
     }
 
     private doublePlaybackSpeed(double: boolean) {
-        if (double) {
+        if (double && this.player.isPlaying()) {
             this.PlaybackText = document.createElement('span');
             this.PlaybackText.className = "DALPlayer-playback-text"
             this.PlaybackText.innerHTML = "2x" + DoubleSpeedSVG();
