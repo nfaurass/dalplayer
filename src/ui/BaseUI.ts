@@ -47,6 +47,8 @@ export class BaseUI {
     private Volume!: HTMLButtonElement;
     private LoadingSpinner!: HTMLDivElement;
 
+    private CaptionsText: HTMLSpanElement = document.createElement('span');
+
     private playerDuration: number = 0;
     private isDragging: boolean = false;
     private hideControlsTimeoutId?: number;
@@ -71,7 +73,9 @@ export class BaseUI {
         this.player.on('canplay', () => this.hideLoadingSpinner());
         this.player.on('loop', () => this.updateLoopButton());
         this.player.on('pip', () => this.updatePiPButton());
-        document.addEventListener('fullscreenchange', () => this.updateFullscreenToggleButton());
+        this.player.on('caption-cuechange', () => this.updateCaptions());
+        window.addEventListener('resize', () => this.updateCaptionsFont());
+        document.addEventListener('fullscreenchange', () => (this.updateFullscreenToggleButton(), this.updateCaptionsFont()));
         this.uiWrapper.addEventListener('mousemove', () => this.resetTimer());
         this.uiWrapper.addEventListener('touchstart', () => this.resetTimer());
         this.uiWrapper.addEventListener('keydown', () => this.resetTimer());
@@ -166,9 +170,20 @@ export class BaseUI {
 
         // Captions
         if (this.player.isCaptions()) {
+            // Control
             this.Captions = CaptionsControl();
-            this.Captions.addEventListener("click", () => console.log("Captions clicked"));
+            this.Captions.addEventListener("click", () => (this.player.setSelectedCaption("English"), this.updateCaptionsFont()));
             this.BottomLowerRightControls.appendChild(this.Captions);
+            // Container
+            const captionsArea = document.createElement("div");
+            captionsArea.className = "DALPlayer-captions";
+            const captionsContainer = document.createElement("div");
+            captionsContainer.className = "DALPlayer-captions-container";
+            this.CaptionsText = document.createElement("span");
+            this.CaptionsText.className = "DALPlayer-captions-text";
+            captionsContainer.appendChild(this.CaptionsText);
+            captionsArea.appendChild(captionsContainer);
+            this.uiWrapper.appendChild(captionsArea);
         }
 
         // Fullscreen
@@ -261,6 +276,20 @@ export class BaseUI {
     private resetTimer() {
         this.showUI();
         this.scheduleHideControls();
+    }
+
+    private updateCaptions() {
+        const newTrack = this.player.getSelectedCaptionTrack();
+        if (newTrack) this.updateCaptionsText(newTrack.activeCues);
+        else this.CaptionsText.innerHTML = "";
+    }
+
+    private updateCaptionsText(activeCues: TextTrackCueList | null): void {
+        this.CaptionsText.innerHTML = Array.from(activeCues ?? []).map(cue => "text" in cue ? cue.text : "").join("\n");
+    }
+
+    private updateCaptionsFont() {
+        this.CaptionsText.style.fontSize = `${this.player.getVideoMetadata().cH * 0.04}px`;
     }
 
     // Shortcuts
