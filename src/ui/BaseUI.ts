@@ -354,8 +354,9 @@ export class BaseUI {
         let spaceKeyPressTimer: number | null = null;
         let isSpaceKeyLongPressed = false;
         let isSpaceKeyDown = true;
+        this.uiWrapper.tabIndex = 0;
 
-        document.addEventListener('keydown', (e: KeyboardEvent) => {
+        this.uiWrapper.addEventListener('keydown', (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
@@ -421,7 +422,7 @@ export class BaseUI {
             }
         });
 
-        document.addEventListener('keyup', (e: KeyboardEvent) => {
+        this.uiWrapper.addEventListener('keyup', (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
             switch (e.code) {

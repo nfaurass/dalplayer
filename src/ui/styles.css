@@ -16,6 +16,11 @@
     -webkit-user-select: none;
 }
 
+#DALPlayer-ui-wrapper:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 .DALPlayer-button {
     border: none;
     outline: none;
