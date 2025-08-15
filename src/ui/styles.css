@@ -232,6 +232,52 @@
     padding: 0;
 }
 
+.DALPlayer-captions-dropdown {
+    position: absolute;
+    bottom: 120%;
+    right: 0;
+    background: #000000dd;
+    padding: 6px;
+    border-radius: 10px;
+    min-width: 200px;
+    display: none;
+    box-shadow: 0 4px 16px var(--DALPlayer-black-overlay-hover);
+    z-index: 100;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.DALPlayer-captions-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 12px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #000000dd;
+}
+
+.DALPlayer-captions-dropdown-item {
+    color: var(--DALPlayer-white-80);
+    cursor: pointer;
+    padding: 6px 10px;
+    transition: all var(--DALPlayer-transition-fast);
+    border-radius: 10px;
+    margin-top: 4px;
+}
+
+.DALPlayer-captions-dropdown-item-active {
+    color: white;
+    background: #ffffff2b;
+}
+
+.DALPlayer-captions-dropdown-item:hover {
+    color: var(--DALPlayer-white-80);
+    background: #ffffff1c;
+}
+
 .DALPlayer-playback-text {
     position: absolute;
     top: 6%;
