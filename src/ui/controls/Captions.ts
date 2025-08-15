@@ -1,9 +1,24 @@
 import SubtitlesSVG from "../svg/Subtitles";
 
-export default function CaptionsControl(): HTMLButtonElement {
-    const CaptionsControl = document.createElement('button');
-    CaptionsControl.id = "CaptionsControl";
-    CaptionsControl.innerHTML = SubtitlesSVG();
-    CaptionsControl.className = "DALPlayer-button";
-    return CaptionsControl;
+export default function CaptionsControl(labels: string[], selectedCaption: TextTrack | null) {
+    const CaptionsContainer = document.createElement('div');
+    CaptionsContainer.style.position = "relative";
+
+    const CaptionsButton = document.createElement('button');
+    CaptionsButton.id = "CaptionsControl";
+    CaptionsButton.innerHTML = SubtitlesSVG();
+    CaptionsButton.className = "DALPlayer-button";
+    CaptionsContainer.appendChild(CaptionsButton);
+
+    const CaptionsDropdown = document.createElement('div');
+    CaptionsDropdown.className = "DALPlayer-captions-dropdown";
+    ["Off", ...labels].forEach(label => {
+        const item = document.createElement('div');
+        item.textContent = label;
+        item.className = (selectedCaption?.label.toLowerCase() || "off") == label.toLowerCase() ? "DALPlayer-captions-dropdown-item DALPlayer-captions-dropdown-item-active" : "DALPlayer-captions-dropdown-item";
+        CaptionsDropdown.appendChild(item);
+    });
+    CaptionsContainer.appendChild(CaptionsDropdown);
+
+    return {CaptionsContainer, CaptionsDropdown, CaptionsButton};
 }
