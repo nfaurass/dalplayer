@@ -289,12 +289,11 @@ export class BaseUI {
     }
 
     private hideUI(): void {
-        // Always Captions Dropdown
-        if (this.CaptionsDropdown) this.CaptionsDropdown.style.display = 'none';
-        // Hide Bottom Controls
-        this.BottomControls.style.opacity = '0';
-        this.BottomControls.style.pointerEvents = 'none';
-        this.BottomControls.style.transition = 'opacity 0.5s ease';
+        if (this.CaptionsDropdown.style.display == 'none') {
+            this.BottomControls.style.opacity = '0';
+            this.BottomControls.style.pointerEvents = 'none';
+            this.BottomControls.style.transition = 'opacity 0.5s ease';
+        }
     }
 
     private showUI(): void {
