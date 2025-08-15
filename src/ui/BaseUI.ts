@@ -25,6 +25,7 @@ import PiPControl from "./controls/PiP";
 import PiPExitSVG from "./svg/PiPExit";
 import PiPSVG from "./svg/PiP";
 import DoubleSpeedSVG from "./svg/DoubleSpeed";
+import DownloadControl from "./controls/Download";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -47,6 +48,7 @@ export class BaseUI {
     private TimeDisplay!: HTMLSpanElement;
     private Volume!: HTMLButtonElement;
     private VolumeSlider!: HTMLInputElement;
+    private Download!: HTMLButtonElement;
     private LoadingSpinner!: HTMLDivElement;
 
     private CaptionsText: HTMLSpanElement = document.createElement('span');
@@ -196,6 +198,11 @@ export class BaseUI {
             this.uiWrapper.appendChild(captionsArea);
         }
 
+        // Download
+        this.Download = DownloadControl();
+        this.Download.addEventListener("click", () => this.downloadVideo());
+        this.BottomLowerRightControls.appendChild(this.Download);
+
         // Fullscreen
         this.Fullscreen = FullscreenControl();
         this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
@@ -329,6 +336,17 @@ export class BaseUI {
             this.player.setPlaybackRate(1);
             if (this.PlaybackText) this.PlaybackText.remove();
         }
+    }
+
+    private downloadVideo() {
+        const videoUrl = this.player.getSource();
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.target = "_blank";
+        link.download = videoUrl.split('/').pop() || 'video.mp4';
+        this.container.appendChild(link);
+        link.click();
+        this.container.removeChild(link);
     }
 
     // Shortcuts

@@ -130,6 +130,10 @@ export class DALPlayer {
         return this.video.currentTime;
     }
 
+    public getSource(): string {
+        return this.video.src;
+    }
+
     public getDuration(): number {
         return isNaN(this.video.duration) ? 0 : this.video.duration;
     }
