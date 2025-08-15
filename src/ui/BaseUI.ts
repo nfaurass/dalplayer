@@ -46,6 +46,7 @@ export class BaseUI {
     private SeekBar!: HTMLDivElement;
     private TimeDisplay!: HTMLSpanElement;
     private Volume!: HTMLButtonElement;
+    private VolumeSlider!: HTMLInputElement;
     private LoadingSpinner!: HTMLDivElement;
 
     private CaptionsText: HTMLSpanElement = document.createElement('span');
@@ -152,9 +153,16 @@ export class BaseUI {
         this.BottomLowerLeftControls.appendChild(this.PlayPause);
 
         // Volume
-        this.Volume = VolumeControl();
-        this.Volume.addEventListener("click", () => this.player.toggleVolume());
-        this.BottomLowerLeftControls.appendChild(this.Volume);
+        const VolumeControls = VolumeControl();
+        const volumeContainer = VolumeControls.volumeContainer;
+        this.Volume = VolumeControls.volumeIcon;
+        this.VolumeSlider = VolumeControls.volumeSlider;
+        // Volume icon
+        this.Volume.addEventListener("click", () => (this.player.toggleVolume(), this.updateVolumeButton()));
+        // Volume slider
+        this.VolumeSlider.value = this.player.getVolume().toString();
+        this.VolumeSlider.addEventListener('input', (e) => this.updateVolumeSlider(parseFloat((e.target as HTMLInputElement).value)));
+        this.BottomLowerLeftControls.appendChild(volumeContainer);
 
         // TimeDisplay
         this.TimeDisplay = TimeDisplayControl();
@@ -214,6 +222,7 @@ export class BaseUI {
         else if (volume > 0 && volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
         else if (volume >= 0.33 && volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
         else this.Volume.innerHTML = VolumeMaxSVG();
+        if (this.VolumeSlider) this.VolumeSlider.value = volume.toString();
     }
 
     private updateBufferedProgress() {
@@ -228,6 +237,20 @@ export class BaseUI {
 
     private updatePiPButton() {
         this.PiP.innerHTML = this.player.isPiP() ? PiPExitSVG() : PiPSVG();
+    }
+
+    private updateVolumeSlider(volume: number) {
+        this.player.setVolume(Math.min(volume, 1));
+        this.updateVolumeButton();
+        this.VolumeSlider.style.background = `
+            linear-gradient(
+                to right,
+                var(--DALPlayer-white) 0%,
+                var(--DALPlayer-white) ${volume * 100}%,
+                var(--DALPlayer-white-30) ${volume * 100}%,
+                var(--DALPlayer-white-30) 100%
+            )`
+        ;
     }
 
     private showLoadingSpinner() {

@@ -21,7 +21,6 @@ export class DALPlayer {
     private readonly video: HTMLVideoElement;
     private listeners: Record<string, Listener[]> = {};
     private readonly ui;
-    private previousVolume: number = 1;
     private poster: string = "";
 
     constructor(options: DALPlayerOptions) {
@@ -89,7 +88,6 @@ export class DALPlayer {
         if (!volume) this.setMuted(true);
         else this.setMuted(false);
         this.video.volume = volume;
-        this.previousVolume = volume;
     }
 
     public toggleVolume(): void {
