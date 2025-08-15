@@ -403,11 +403,15 @@ export class BaseUI {
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
-                    this.player.setVolume(Math.min(this.player.getVolume() + 0.1, 1));
+                    const volumeArrowUp = this.player.getVolume() + 0.1;
+                    this.player.setVolume(Math.min(volumeArrowUp, 1));
+                    this.updateVolumeSlider(volumeArrowUp);
                     break;
                 case 'ArrowDown':
                     e.preventDefault();
-                    this.player.setVolume(Math.max(this.player.getVolume() - 0.1, 0));
+                    const volumeArrowDown = this.player.getVolume() - 0.1;
+                    this.player.setVolume(Math.max(volumeArrowDown, 0));
+                    this.updateVolumeSlider(volumeArrowDown);
                     break;
                 // Loop
                 case 'KeyL':
