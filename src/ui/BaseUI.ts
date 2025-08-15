@@ -41,6 +41,7 @@ export class BaseUI {
     private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Captions!: HTMLButtonElement;
+    private CaptionsDropdown!: HTMLDivElement;
     private Loop!: HTMLButtonElement;
     private PiP!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
@@ -182,11 +183,26 @@ export class BaseUI {
 
         // Captions
         if (this.player.isCaptions()) {
-            // Control
-            this.Captions = CaptionsControl();
-            this.Captions.addEventListener("click", () => (this.player.setSelectedCaption("English"), this.updateCaptionsFont()));
-            this.BottomLowerRightControls.appendChild(this.Captions);
+            // Controls
+            const CaptionsControls = CaptionsControl(this.player.getCaptionTracksLabels(), this.player.getSelectedCaptionTrack());
+            this.Captions = CaptionsControls.CaptionsButton;
+            this.CaptionsDropdown = CaptionsControls.CaptionsDropdown;
             // Container
+            this.BottomLowerRightControls.appendChild(CaptionsControls.CaptionsContainer);
+            // Button
+            this.Captions.addEventListener("click", () => this.updateCaptionsDropdown());
+            // Dropdown
+            Array.from(this.CaptionsDropdown.children).forEach((child) => {
+                child.addEventListener("click", () => {
+                    this.player.setSelectedCaption(child.textContent || "Off");
+                    this.CaptionsDropdown.querySelectorAll(".DALPlayer-captions-dropdown-item-active").forEach(el => el.classList.remove("DALPlayer-captions-dropdown-item-active"));
+                    child.classList.add("DALPlayer-captions-dropdown-item-active");
+                    this.updateCaptions();
+                    this.updateCaptionsFont();
+                    this.updateCaptionsDropdown();
+                });
+            });
+            // Container On Media
             const captionsArea = document.createElement("div");
             captionsArea.className = "DALPlayer-captions";
             const captionsContainer = document.createElement("div");
@@ -322,6 +338,10 @@ export class BaseUI {
 
     private updateCaptionsFont() {
         this.CaptionsText.style.fontSize = `${this.player.getVideoMetadata().cH * 0.04}px`;
+    }
+
+    private updateCaptionsDropdown() {
+        this.CaptionsDropdown.style.display = this.CaptionsDropdown.style.display === "none" ? "block" : "none"
     }
 
     private doublePlaybackSpeed(double: boolean) {

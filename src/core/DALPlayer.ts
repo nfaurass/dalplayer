@@ -43,10 +43,14 @@ export class DALPlayer {
 
         if (options.captions) {
             const captionsArray = Array.isArray(options.captions) ? options.captions : [options.captions];
+            const addedLabels = new Set<string>();
             captionsArray.forEach(({src, label, lang = "en"}, index) => {
+                const trackLabel = label || "Captions " + (index + 1).toString();
+                if (addedLabels.has(trackLabel)) return;
+                addedLabels.add(trackLabel);
                 const track = document.createElement('track');
                 track.kind = "captions";
-                track.label = label || "Captions " + (index + 1).toString();
+                track.label = trackLabel;
                 track.srclang = lang;
                 track.src = src;
                 this.video.appendChild(track);
@@ -167,6 +171,11 @@ export class DALPlayer {
 
     public getPoster(): string {
         return this.poster ?? "";
+    }
+
+    public getCaptionTracksLabels(): string[] {
+        const labels = Array.from(this.video.textTracks, track => track.label);
+        return Array.from(new Set(labels));
     }
 
     public getSelectedCaptionTrack(): TextTrack | null {
