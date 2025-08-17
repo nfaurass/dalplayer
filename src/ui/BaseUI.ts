@@ -26,6 +26,7 @@ import PiPExitSVG from "./svg/PiPExit";
 import PiPSVG from "./svg/PiP";
 import DoubleSpeedSVG from "./svg/DoubleSpeed";
 import DownloadControl from "./controls/Download";
+import PlaybackSpeedControl from "./controls/PlaybackSpeed";
 
 export class BaseUI {
     private player: DALPlayer;
@@ -51,6 +52,8 @@ export class BaseUI {
     private VolumeSlider!: HTMLInputElement;
     private Download!: HTMLButtonElement;
     private LoadingSpinner!: HTMLDivElement;
+    private PlaybackSpeed!: HTMLButtonElement;
+    private PlaybackSpeedDropdown!: HTMLDivElement;
 
     private CaptionsText: HTMLSpanElement = document.createElement('span');
     private PlaybackText!: HTMLSpanElement;
@@ -175,6 +178,24 @@ export class BaseUI {
         this.PiP = PiPControl();
         this.PiP.addEventListener("click", () => this.player.togglePip());
         this.BottomLowerRightControls.appendChild(this.PiP);
+
+        // PlaybackSpeed
+        const PlaybackSpeedControls = PlaybackSpeedControl();
+        this.PlaybackSpeed = PlaybackSpeedControls.PlaybackSpeedButton;
+        this.PlaybackSpeedDropdown = PlaybackSpeedControls.PlaybackSpeedDropdown;
+        // Container
+        this.BottomLowerRightControls.appendChild(PlaybackSpeedControls.PlaybackSpeedContainer);
+        // Button
+        this.PlaybackSpeed.addEventListener("click", () => this.updatePlaybackSpeedDropdown());
+        // Dropdown
+        Array.from(this.PlaybackSpeedDropdown.children).forEach((child) => {
+            child.addEventListener("click", () => {
+                this.player.setPlaybackRate(parseFloat(child.textContent));
+                this.PlaybackSpeedDropdown.querySelectorAll(".DALPlayer-playback-speed-dropdown-item-active").forEach(el => el.classList.remove("DALPlayer-playback-speed-dropdown-item-active"));
+                child.classList.add("DALPlayer-playback-speed-dropdown-item-active");
+                this.updatePlaybackSpeedDropdown();
+            });
+        });
 
         // Loop
         this.Loop = LoopControl();
@@ -344,6 +365,10 @@ export class BaseUI {
 
     private updateCaptionsDropdown() {
         this.CaptionsDropdown.style.display = this.CaptionsDropdown.style.display === "none" ? "block" : "none"
+    }
+
+    private updatePlaybackSpeedDropdown() {
+        this.PlaybackSpeedDropdown.style.display = this.PlaybackSpeedDropdown.style.display === "none" ? "block" : "none"
     }
 
     private doublePlaybackSpeed(double: boolean) {
