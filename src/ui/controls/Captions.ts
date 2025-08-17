@@ -11,6 +11,7 @@ export default function CaptionsControl(labels: string[], selectedCaption: TextT
     CaptionsContainer.appendChild(CaptionsButton);
 
     const CaptionsDropdown = document.createElement('div');
+    CaptionsDropdown.style.display = "none";
     CaptionsDropdown.className = "DALPlayer-captions-dropdown";
     ["Off", ...labels].forEach(label => {
         const item = document.createElement('div');
