@@ -11,6 +11,7 @@ export default function PlaybackSpeedControl() {
     PlaybackSpeedContainer.appendChild(PlaybackSpeedButton);
 
     const PlaybackSpeedDropdown = document.createElement('div');
+    PlaybackSpeedDropdown.style.display = "none";
     PlaybackSpeedDropdown.className = "DALPlayer-playback-speed-dropdown";
     ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].forEach(label => {
         const item = document.createElement('div');
