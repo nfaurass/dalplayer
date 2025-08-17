@@ -62,6 +62,7 @@ export class BaseUI {
     private isDragging: boolean = false;
     private hideControlsTimeoutId?: number;
     private inactivityDelay = 1500;
+    private lastPlaybackRate: number = 1;
 
     constructor(player: DALPlayer) {
         this.player = player;
@@ -190,7 +191,9 @@ export class BaseUI {
         // Dropdown
         Array.from(this.PlaybackSpeedDropdown.children).forEach((child) => {
             child.addEventListener("click", () => {
-                this.player.setPlaybackRate(parseFloat(child.textContent));
+                const playbackRate = parseFloat(child.textContent);
+                this.player.setPlaybackRate(playbackRate);
+                this.lastPlaybackRate = playbackRate;
                 this.PlaybackSpeedDropdown.querySelectorAll(".DALPlayer-playback-speed-dropdown-item-active").forEach(el => el.classList.remove("DALPlayer-playback-speed-dropdown-item-active"));
                 child.classList.add("DALPlayer-playback-speed-dropdown-item-active");
                 this.updatePlaybackSpeedDropdown();
@@ -380,7 +383,7 @@ export class BaseUI {
             this.uiWrapper.appendChild(this.PlaybackText);
             this.player.setPlaybackRate(2);
         } else {
-            this.player.setPlaybackRate(1);
+            this.player.setPlaybackRate(this.lastPlaybackRate || 1);
             if (this.PlaybackText) this.PlaybackText.remove();
         }
     }
