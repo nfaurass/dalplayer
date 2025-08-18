@@ -1,67 +1,60 @@
 import {BaseUI} from "../ui/BaseUI";
+import {DALPlayerPlugin} from "./DALPlayerPlugin";
+import {CaptionsPlugin} from "../plugins/CaptionsPlugin";
+import {PlaybackSpeedPlugin} from "../plugins/PlaybackSpeedPlugin";
+import {PictureInPicturePlugin} from "../plugins/PictureInPicturePlugin";
+import {LoopPlugin} from "../plugins/LoopPlugin";
+import {DownloadPlugin} from "../plugins/DownloadPlugin";
 
 type Listener = (...args: any[]) => void;
 
 type DALPlayerUIOptions = "Base" | "V1";
 
-type Caption = { src: string, label?: string, lang?: string };
+interface NativePluginMap {
+    captions: CaptionsPlugin;
+    playback_speed: PlaybackSpeedPlugin;
+    picture_in_picture: PictureInPicturePlugin;
+    loop: LoopPlugin;
+    download: DownloadPlugin;
+}
 
 export interface DALPlayerOptions {
     parent: HTMLElement | string;
     source?: string;
+    poster?: string;
     autoplay?: boolean;
     controls?: boolean;
+    plugins?: DALPlayerPlugin[];
     ui?: DALPlayerUIOptions;
-    captions?: Caption | Caption[];
-    poster?: string;
 }
 
 export class DALPlayer {
     private readonly container: HTMLElement;
     private readonly video: HTMLVideoElement;
     private listeners: Record<string, Listener[]> = {};
+    private plugins: DALPlayerPlugin[] = [];
     private readonly ui;
     private poster: string = "";
 
     constructor(options: DALPlayerOptions) {
+        // init
         this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
-        if (!this.container) {
-            throw new Error('DALPlayer parent element not found');
-        }
-
+        if (!this.container) throw new Error('DALPlayer parent element not found');
         this.video = document.createElement('video');
         this.video.controls = options.controls ?? false;
+        this.video.style.width = '100%';
+        this.container.appendChild(this.video);
 
+        // options
+        if (options.source) this.setSource(options.source);
+        if (options.plugins) options.plugins.forEach(plugin => this.use(plugin));
         if (options.poster) this.poster = options.poster;
-
         if (options.autoplay) {
             this.video.muted = true;
             this.video.play().catch(err => {
                 console.warn('Autoplay failed:', err);
             });
         }
-
-        if (options.captions) {
-            const captionsArray = Array.isArray(options.captions) ? options.captions : [options.captions];
-            const addedLabels = new Set<string>();
-            captionsArray.forEach(({src, label, lang = "en"}, index) => {
-                const trackLabel = label || "Captions " + (index + 1).toString();
-                if (addedLabels.has(trackLabel)) return;
-                addedLabels.add(trackLabel);
-                const track = document.createElement('track');
-                track.kind = "captions";
-                track.label = trackLabel;
-                track.srclang = lang;
-                track.src = src;
-                this.video.appendChild(track);
-            });
-        }
-
-        this.video.style.width = '100%';
-        this.container.appendChild(this.video);
-
-        if (options.source) this.setSource(options.source);
-
         if (options.ui) {
             this.video.controls = false;
             switch (options.ui) {
@@ -70,6 +63,7 @@ export class DALPlayer {
             }
         }
 
+        // events
         ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'].forEach(eventName => {
             this.video.addEventListener(eventName, (ev) => {
                 this.emit(eventName, ev);
@@ -108,28 +102,6 @@ export class DALPlayer {
         this.video.muted = muted;
     }
 
-    public setPlaybackRate(rate: number): void {
-        this.video.playbackRate = rate;
-    }
-
-    public setLoop(loop: boolean): void {
-        this.video.loop = loop;
-        this.emit('loop', loop);
-    }
-
-    public setSelectedCaption(captionLabel: string): void {
-        const textTracks = this.video.textTracks;
-        for (let i = 0; i < textTracks.length; i++) {
-            if (textTracks[i].label === captionLabel) {
-                textTracks[i].mode = "hidden";
-                textTracks[i].addEventListener('cuechange', () => this.emit('caption-cuechange', textTracks[i].activeCues));
-            } else {
-                textTracks[i].mode = "disabled";
-                textTracks[i].removeEventListener('cuechange', () => this.emit('caption-cuechange', textTracks[i].activeCues));
-            }
-        }
-    }
-
     public getCurrentTime(): number {
         return this.video.currentTime;
     }
@@ -148,10 +120,6 @@ export class DALPlayer {
 
     public getSeekPosition(): number {
         return this.video.duration > 0 ? (this.video.currentTime / this.video.duration) * 100 : 0;
-    }
-
-    public getPlaybackRate(): number {
-        return this.video.playbackRate;
     }
 
     public getContainer(): HTMLElement {
@@ -173,15 +141,8 @@ export class DALPlayer {
         return this.poster ?? "";
     }
 
-    public getCaptionTracksLabels(): string[] {
-        const labels = Array.from(this.video.textTracks, track => track.label);
-        return Array.from(new Set(labels));
-    }
-
-    public getSelectedCaptionTrack(): TextTrack | null {
-        const textTracks = this.video.textTracks;
-        for (let i = 0; i < textTracks.length; i++) if (textTracks[i].mode === "hidden") return textTracks[i] || null;
-        return null;
+    public getVideoElement(): HTMLVideoElement {
+        return this.video;
     }
 
     public getVideoMetadata(): { cW: number, cH: number, vW: number, vH: number, W: number, H: number } {
@@ -211,18 +172,6 @@ export class DALPlayer {
         return !!this.poster;
     }
 
-    public isLooping(): boolean {
-        return this.video.loop;
-    }
-
-    public isPiP(): boolean {
-        return document.pictureInPictureElement === this.video;
-    }
-
-    public isCaptions(): boolean {
-        return !!this.video.textTracks.length;
-    }
-
     public play(): void {
         this.video.play();
     }
@@ -248,45 +197,27 @@ export class DALPlayer {
         else this.enterFullscreen();
     }
 
-    public toggleLoop(): void {
-        this.video.loop = !this.video.loop;
-        this.emit('loop', this.video.loop);
-    }
-
-    public async enterPiP(): Promise<void> {
-        try {
-            if (document.pictureInPictureEnabled && this.video !== document.pictureInPictureElement) {
-                await this.video.requestPictureInPicture();
-                this.emit('enterPiP');
-            }
-        } catch (err) {
-            console.error('Failed to enter PiP:', err);
-        }
-    }
-
-    public async exitPiP(): Promise<void> {
-        try {
-            if (document.pictureInPictureElement === this.video) {
-                await document.exitPictureInPicture();
-                this.emit('exitPiP');
-            }
-        } catch (err) {
-            console.error('Failed to exit PiP:', err);
-        }
-    }
-
-    public async togglePip(): Promise<void> {
-        if (this.isPiP()) await this.exitPiP();
-        else await this.enterPiP();
-        this.emit('pip', this.isPiP());
-    }
-
     public destroy(): void {
         this.video.pause();
         this.video.src = '';
         this.video.load();
         this.video.remove();
         if (this.ui) this.ui.destroy();
+    }
+
+    use<T extends DALPlayerPlugin>(plugin: T) {
+        plugin.setup(this);
+        this.plugins.push(plugin);
+    }
+
+    get<K extends keyof NativePluginMap>(name: K): NativePluginMap[K] | null {
+        return (this.plugins.find(p => p.name === name) || null) as NativePluginMap[K] | null;
+    }
+
+    list(): { [K in keyof NativePluginMap]?: NativePluginMap[K] } & { [key: string]: any } {
+        const map: { [key: string]: any } = {};
+        for (const plugin of this.plugins) map[plugin.name] = plugin;
+        return map;
     }
 
     on(event: string, fn: Listener) {
