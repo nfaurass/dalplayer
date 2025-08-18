@@ -25,12 +25,18 @@
         parent: document.getElementById("player") || "player",
         source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         poster: './poster.jpg',
-        captions: [
-            {src: './captions/en.vtt', label: 'English', lang: 'en'},
-            {src: './captions/es.vtt', label: 'Spanish', lang: 'es'},
-            {src: './captions/de.vtt', label: 'German', lang: 'de'}
-        ],
-        ui: "Base"
+        ui: "Base",
+        plugins: [
+            new DALPlayer.LoopPlugin(),
+            new DALPlayer.DownloadPlugin(),
+            new DALPlayer.PictureInPicturePlugin(),
+            new DALPlayer.PlaybackSpeedPlugin([0.5, 1, 1.5, 2]),
+            new DALPlayer.CaptionsPlugin([
+                {src: './captions/en.vtt', label: 'English', lang: 'en'},
+                {src: './captions/es.vtt', label: 'Spanish', lang: 'es'},
+                {src: './captions/de.vtt', label: 'German', lang: 'de'}
+            ])
+        ]
     });
 </script>
 
