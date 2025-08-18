@@ -1,4 +1,4 @@
-import SubtitlesSVG from "../svg/Subtitles";
+import CaptionsSVG from "../svg/Captions";
 
 export default function CaptionsControl(labels: string[], selectedCaption: TextTrack | null) {
     const CaptionsContainer = document.createElement('div');
@@ -6,7 +6,7 @@ export default function CaptionsControl(labels: string[], selectedCaption: TextT
 
     const CaptionsButton = document.createElement('button');
     CaptionsButton.id = "CaptionsControl";
-    CaptionsButton.innerHTML = SubtitlesSVG();
+    CaptionsButton.innerHTML = CaptionsSVG();
     CaptionsButton.className = "DALPlayer-button";
     CaptionsContainer.appendChild(CaptionsButton);
 

@@ -1,6 +1,6 @@
 import PlaybackSpeedSVG from "../svg/PlaybackSpeed";
 
-export default function PlaybackSpeedControl() {
+export default function PlaybackSpeedControl(options: number[], defaultPlaybackSpeed: number) {
     const PlaybackSpeedContainer = document.createElement('div');
     PlaybackSpeedContainer.style.position = "relative";
 
@@ -13,10 +13,10 @@ export default function PlaybackSpeedControl() {
     const PlaybackSpeedDropdown = document.createElement('div');
     PlaybackSpeedDropdown.style.display = "none";
     PlaybackSpeedDropdown.className = "DALPlayer-playback-speed-dropdown";
-    ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"].forEach(label => {
+    options.forEach(label => {
         const item = document.createElement('div');
-        item.textContent = label;
-        item.className = "DALPlayer-playback-speed-dropdown-item";
+        item.textContent = label.toString();
+        item.className = label == defaultPlaybackSpeed ? "DALPlayer-playback-speed-dropdown-item DALPlayer-playback-speed-dropdown-item-active" : "DALPlayer-playback-speed-dropdown-item";
         PlaybackSpeedDropdown.appendChild(item);
     });
     PlaybackSpeedContainer.appendChild(PlaybackSpeedDropdown);
