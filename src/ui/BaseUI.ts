@@ -1,48 +1,53 @@
 import type {DALPlayer} from '../core/DALPlayer';
 import Styles from "./styles.css";
-import PlayPauseControl from "./controls/PlayPause";
+// SVG Imports
 import PlaySVG from "./svg/Play";
 import PauseSVG from "./svg/Pause";
 import FullscreenExitSVG from "./svg/FullscreenExit";
 import FullscreenSVG from "./svg/Fullscreen";
-import FullscreenControl from "./controls/Fullscreen";
-import SeekBarControl from "./controls/SeekBar";
-import {BottomControls} from "./controls/Bottom";
-import TimeDisplayControl from "./controls/TimeDisplay";
-import {formatTime} from "./utils/formatTime";
-import VolumeControl from "./controls/Volume";
 import VolumeMaxSVG from "./svg/VolumeMax";
 import VolumeMutedSVG from "./svg/VolumeMuted";
 import VolumeLowSVG from "./svg/VolumeLow";
 import VolumeMediumSVG from "./svg/VolumeMedium";
-import {updatePosition} from "./utils/updatePosition";
-import LoadingSpinner from "./controls/LoadingSpinner";
-import CaptionsControl from "./controls/Captions";
-import LoopControl from "./controls/Loop";
 import LoopExistSVG from "./svg/LoopExit";
 import LoopSVG from "./svg/Loop";
-import PiPControl from "./controls/PiP";
 import PiPExitSVG from "./svg/PiPExit";
 import PiPSVG from "./svg/PiP";
 import DoubleSpeedSVG from "./svg/DoubleSpeed";
+// Control Imports
+import PlayPauseControl from "./controls/PlayPause";
+import FullscreenControl from "./controls/Fullscreen";
+import SeekBarControl from "./controls/SeekBar";
+import {BottomControls} from "./controls/Bottom";
+import TimeDisplayControl from "./controls/TimeDisplay";
+import VolumeControl from "./controls/Volume";
+import LoadingSpinner from "./controls/LoadingSpinner";
+import CaptionsControl from "./controls/Captions";
+import LoopControl from "./controls/Loop";
+import PiPControl from "./controls/PiP";
 import DownloadControl from "./controls/Download";
 import PlaybackSpeedControl from "./controls/PlaybackSpeed";
+// Utility Imports
+import {formatTime} from "./utils/formatTime";
+import {updatePosition} from "./utils/updatePosition";
 
 export class BaseUI {
-    private player: DALPlayer;
+    // Core Properties
+    private readonly player: DALPlayer;
+    private readonly container: HTMLElement;
+    private readonly pluginCache: Record<string, any>;
 
-    private container: HTMLElement;
-    private uiWrapper: HTMLDivElement = document.createElement('div');
-    private uiPoster!: HTMLDivElement;
-
+    // UI Element Properties
+    private uiWrapper!: HTMLDivElement;
+    private uiPoster?: HTMLDivElement;
     private BottomControls!: HTMLDivElement;
     private BottomUpperLeftControls!: HTMLDivElement;
-    // private BottomUpperRightControls!: HTMLDivElement;
     private BottomLowerLeftControls!: HTMLDivElement;
     private BottomLowerRightControls!: HTMLDivElement;
     private PlayPause!: HTMLButtonElement;
     private Captions!: HTMLButtonElement;
     private CaptionsDropdown!: HTMLDivElement;
+    private CaptionsText!: HTMLSpanElement;
     private Loop!: HTMLButtonElement;
     private PiP!: HTMLButtonElement;
     private Fullscreen!: HTMLButtonElement;
@@ -51,454 +56,533 @@ export class BaseUI {
     private Volume!: HTMLButtonElement;
     private VolumeSlider!: HTMLInputElement;
     private Download!: HTMLButtonElement;
-    private LoadingSpinner!: HTMLDivElement;
+    private LoadingSpinner?: HTMLDivElement;
     private PlaybackSpeed!: HTMLButtonElement;
     private PlaybackSpeedDropdown!: HTMLDivElement;
-
-    private CaptionsText: HTMLSpanElement = document.createElement('span');
     private PlaybackText!: HTMLSpanElement;
 
+    // State Properties
     private playerDuration: number = 0;
-    private isDragging: boolean = false;
+    private isSeeking: boolean = false;
     private hideControlsTimeoutId?: number;
-    private inactivityDelay = 1500;
-    private lastPlaybackRate: number = 1;
+    private spacebarPressTimer: number | null = null;
+    private isSpacebarLongPress: boolean = false;
+
+    // Constants
+    private readonly INACTIVITY_DELAY = 1500;
+    private readonly LONG_PRESS_THRESHOLD = 500;
+    private readonly SEEK_TIME_SECONDS = 5;
 
     constructor(player: DALPlayer) {
         this.player = player;
         this.container = player.getContainer();
-
-        this.createUI();
-
-        this.player.on('play', () => (this.hidePoster(), this.updatePlayPauseButton(), this.scheduleHideControls()));
-        this.player.on('ended', () => this.showPoster());
-        this.player.on('pause', () => (this.updatePlayPauseButton(), this.showUI()));
-        this.player.on('loadedmetadata', () => this.updateTimeDisplay());
-        this.player.on('timeupdate', () => this.updateTimeDisplay());
-        this.player.on('volumechange', () => this.updateVolumeButton());
-        this.player.on('progress', () => this.updateBufferedProgress());
-        this.player.on('waiting', () => this.showLoadingSpinner());
-        this.player.on('playing', () => this.hideLoadingSpinner());
-        this.player.on('stalled', () => this.showLoadingSpinner());
-        this.player.on('canplay', () => this.hideLoadingSpinner());
-        this.player.on('loop', () => this.updateLoopButton());
-        this.player.on('pip', () => this.updatePiPButton());
-        this.player.on('caption-cuechange', () => this.updateCaptions());
-        window.addEventListener('resize', () => this.updateCaptionsFont());
-        document.addEventListener('fullscreenchange', () => (this.updateFullscreenToggleButton(), this.updateCaptionsFont()));
-        this.uiWrapper.addEventListener('mousemove', () => this.resetTimer());
-        this.uiWrapper.addEventListener('touchstart', () => this.resetTimer());
-        this.uiWrapper.addEventListener('keydown', () => this.resetTimer());
-
-        this.updatePlayPauseButton();
-        this.updateFullscreenToggleButton();
-        this.updateVolumeButton();
-        this.updateBufferedProgress();
-
-        this.addShortcuts();
-
-        if (!this.player.isPaused()) this.scheduleHideControls();
+        this.pluginCache = this.player.list();
+        this.buildUI();
+        this.bindEventListeners();
+        this.initializeUIState();
     }
 
-    private createUI() {
+    public destroy(): void {
+        this.uiWrapper?.remove();
+        document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+        window.removeEventListener('resize', this.onWindowResize);
+    }
 
-        // Inject CSS
+    // UI Construction
+    private buildUI(): void {
+        this.createUiWrapper();
+        this.injectStyles();
+        this.setupPoster();
+        this.setupBottomControls();
+        this.setupCaptionsArea();
+        this.container.appendChild(this.uiWrapper);
+    }
+
+    private createUiWrapper(): void {
+        this.uiWrapper = document.createElement('div');
+        this.uiWrapper.id = "DALPlayer-ui-wrapper";
+        this.uiWrapper.tabIndex = 0;
+        const video = this.container.querySelector('video');
+        if (video) this.uiWrapper.appendChild(video);
+    }
+
+    private injectStyles(): void {
         const styleSheet = document.createElement('style');
         styleSheet.innerHTML = Styles;
         this.uiWrapper.prepend(styleSheet);
+    }
 
-        // Wrapper
-        this.uiWrapper.id = "DALPlayer-ui-wrapper";
+    private setupPoster(): void {
+        if (!this.player.isPoster()) return;
+        this.uiPoster = document.createElement("div");
+        this.uiPoster.className = "DALPlayer-poster";
+        this.uiPoster.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 5%, transparent 100%), url(${this.player.getPoster()})`;
+        const posterPlayButton = document.createElement("button");
+        posterPlayButton.className = "DALPlayer-poster-play-button";
+        posterPlayButton.innerHTML = PlaySVG();
+        posterPlayButton.addEventListener("click", () => this.player.play());
+        this.uiPoster.appendChild(posterPlayButton);
+        this.uiWrapper.appendChild(this.uiPoster);
+    }
 
-        const video = this.container.querySelector('video');
-        if (video) this.uiWrapper.appendChild(video);
-        this.container.appendChild(this.uiWrapper);
-
-        // Poster
-        if (this.player.isPoster()) {
-            this.uiPoster = document.createElement("div");
-            this.uiPoster.className = "DALPlayer-poster";
-            this.uiPoster.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 5%, transparent 100%), url(${this.player.getPoster()})`;
-            const posterPlayButton = document.createElement("button");
-            posterPlayButton.className = "DALPlayer-poster-play-button";
-            posterPlayButton.innerHTML = PlaySVG();
-            posterPlayButton.addEventListener("click", () => this.player.play());
-            this.uiPoster.appendChild(posterPlayButton);
-            this.uiWrapper.appendChild(this.uiPoster);
-        }
-
-        // BottomControls
-        const AllBottomControls = BottomControls();
-        this.BottomControls = AllBottomControls.Bottom;
-        this.BottomUpperLeftControls = AllBottomControls.BottomUpperLeft;
-        // this.BottomUpperRightControls = AllBottomControls.BottomUpperRight;
-        this.BottomLowerLeftControls = AllBottomControls.BottomLowerLeft;
-        this.BottomLowerRightControls = AllBottomControls.BottomLowerRight;
-
+    private setupBottomControls(): void {
+        const {Bottom, BottomUpperLeft, BottomLowerLeft, BottomLowerRight} = BottomControls();
+        this.BottomControls = Bottom;
+        this.BottomUpperLeftControls = BottomUpperLeft;
+        this.BottomLowerLeftControls = BottomLowerLeft;
+        this.BottomLowerRightControls = BottomLowerRight;
+        this.setupSeekBar();
+        this.setupPlayPauseControl();
+        this.setupVolumeControl();
+        this.setupTimeDisplay();
+        this.setupPiPControl();
+        this.setupPlaybackSpeedControl();
+        this.setupLoopControl();
+        this.setupCaptionsControl();
+        this.setupDownloadControl();
+        this.setupFullscreenControl();
         this.uiWrapper.appendChild(this.BottomControls);
+    }
 
-        // SeekBar
+    private setupCaptionsArea(): void {
+        const captionsPlugin = this.pluginCache["captions"];
+        if (!captionsPlugin?.hasCaptions()) return;
+        const captionsArea = document.createElement("div");
+        captionsArea.className = "DALPlayer-captions";
+        const captionsContainer = document.createElement("div");
+        captionsContainer.className = "DALPlayer-captions-container";
+        this.CaptionsText = document.createElement("span");
+        this.CaptionsText.className = "DALPlayer-captions-text";
+        captionsContainer.appendChild(this.CaptionsText);
+        captionsArea.appendChild(captionsContainer);
+        this.uiWrapper.appendChild(captionsArea);
+    }
+
+    // Individual Control Setup
+
+    private setupSeekBar(): void {
         this.SeekBar = SeekBarControl();
-        this.SeekBar.addEventListener('pointerdown', e => {
-            this.isDragging = true;
-            updatePosition(e.clientX, this.SeekBar);
-            (e.target as HTMLElement).setPointerCapture(e.pointerId);
-        });
-        window.addEventListener('pointermove', e => {
-            if (this.isDragging) updatePosition(e.clientX, this.SeekBar);
-        });
-        window.addEventListener('pointerup', () => {
-            this.isDragging = false;
-        });
-        this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
-        this.player.on('timeupdate', () => (this.SeekBar as any).setProgress(this.player.getSeekPosition()));
         this.BottomUpperLeftControls.appendChild(this.SeekBar);
+    }
 
-        // PlayPause
+    private setupPlayPauseControl(): void {
         this.PlayPause = PlayPauseControl();
-        this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
         this.BottomLowerLeftControls.appendChild(this.PlayPause);
+    }
 
-        // Volume
-        const VolumeControls = VolumeControl();
-        const volumeContainer = VolumeControls.volumeContainer;
-        this.Volume = VolumeControls.volumeIcon;
-        this.VolumeSlider = VolumeControls.volumeSlider;
-        // Volume icon
-        this.Volume.addEventListener("click", () => (this.player.toggleVolume(), this.updateVolumeButton()));
-        // Volume slider
+    private setupVolumeControl(): void {
+        const {volumeContainer, volumeIcon, volumeSlider} = VolumeControl();
+        this.Volume = volumeIcon;
+        this.VolumeSlider = volumeSlider;
         this.VolumeSlider.value = this.player.getVolume().toString();
-        this.VolumeSlider.addEventListener('input', (e) => this.updateVolumeSlider(parseFloat((e.target as HTMLInputElement).value)));
         this.BottomLowerLeftControls.appendChild(volumeContainer);
+    }
 
-        // TimeDisplay
+    private setupTimeDisplay(): void {
         this.TimeDisplay = TimeDisplayControl();
         this.BottomLowerLeftControls.appendChild(this.TimeDisplay);
+    }
 
-        // PiP
+    private setupPiPControl(): void {
+        if (!this.pluginCache["picture_in_picture"]) return;
         this.PiP = PiPControl();
-        this.PiP.addEventListener("click", () => this.player.togglePip());
         this.BottomLowerRightControls.appendChild(this.PiP);
+    }
 
-        // PlaybackSpeed
-        const PlaybackSpeedControls = PlaybackSpeedControl();
-        this.PlaybackSpeed = PlaybackSpeedControls.PlaybackSpeedButton;
-        this.PlaybackSpeedDropdown = PlaybackSpeedControls.PlaybackSpeedDropdown;
-        // Container
-        this.BottomLowerRightControls.appendChild(PlaybackSpeedControls.PlaybackSpeedContainer);
-        // Button
-        this.PlaybackSpeed.addEventListener("click", () => this.updatePlaybackSpeedDropdown());
-        // Dropdown
-        Array.from(this.PlaybackSpeedDropdown.children).forEach((child) => {
-            child.addEventListener("click", () => {
-                const playbackRate = parseFloat(child.textContent);
-                this.player.setPlaybackRate(playbackRate);
-                this.lastPlaybackRate = playbackRate;
-                this.PlaybackSpeedDropdown.querySelectorAll(".DALPlayer-playback-speed-dropdown-item-active").forEach(el => el.classList.remove("DALPlayer-playback-speed-dropdown-item-active"));
-                child.classList.add("DALPlayer-playback-speed-dropdown-item-active");
-                this.updatePlaybackSpeedDropdown();
-            });
-        });
+    private setupPlaybackSpeedControl(): void {
+        const playbackSpeedPlugin = this.pluginCache["playback_speed"];
+        if (!playbackSpeedPlugin) return;
+        const {PlaybackSpeedContainer, PlaybackSpeedButton, PlaybackSpeedDropdown} = PlaybackSpeedControl(
+            playbackSpeedPlugin.getOptions(),
+            playbackSpeedPlugin.getDefaultPlaybackSpeed()
+        );
+        this.PlaybackSpeed = PlaybackSpeedButton;
+        this.PlaybackSpeedDropdown = PlaybackSpeedDropdown;
+        this.BottomLowerRightControls.appendChild(PlaybackSpeedContainer);
+    }
 
-        // Loop
+    private setupLoopControl(): void {
+        if (!this.pluginCache["loop"]) return;
         this.Loop = LoopControl();
-        this.Loop.addEventListener("click", () => this.player.toggleLoop());
         this.BottomLowerRightControls.appendChild(this.Loop);
+    }
 
-        // Captions
-        if (this.player.isCaptions()) {
-            // Controls
-            const CaptionsControls = CaptionsControl(this.player.getCaptionTracksLabels(), this.player.getSelectedCaptionTrack());
-            this.Captions = CaptionsControls.CaptionsButton;
-            this.CaptionsDropdown = CaptionsControls.CaptionsDropdown;
-            // Container
-            this.BottomLowerRightControls.appendChild(CaptionsControls.CaptionsContainer);
-            // Button
-            this.Captions.addEventListener("click", () => this.updateCaptionsDropdown());
-            // Dropdown
-            Array.from(this.CaptionsDropdown.children).forEach((child) => {
-                child.addEventListener("click", () => {
-                    this.player.setSelectedCaption(child.textContent || "Off");
-                    this.CaptionsDropdown.querySelectorAll(".DALPlayer-captions-dropdown-item-active").forEach(el => el.classList.remove("DALPlayer-captions-dropdown-item-active"));
-                    child.classList.add("DALPlayer-captions-dropdown-item-active");
-                    this.updateCaptions();
-                    this.updateCaptionsFont();
-                    this.updateCaptionsDropdown();
-                });
-            });
-            // Container On Media
-            const captionsArea = document.createElement("div");
-            captionsArea.className = "DALPlayer-captions";
-            const captionsContainer = document.createElement("div");
-            captionsContainer.className = "DALPlayer-captions-container";
-            this.CaptionsText = document.createElement("span");
-            this.CaptionsText.className = "DALPlayer-captions-text";
-            captionsContainer.appendChild(this.CaptionsText);
-            captionsArea.appendChild(captionsContainer);
-            this.uiWrapper.appendChild(captionsArea);
-        }
+    private setupCaptionsControl(): void {
+        const captionsPlugin = this.pluginCache["captions"];
+        if (!captionsPlugin?.hasCaptions()) return;
+        const {CaptionsContainer, CaptionsButton, CaptionsDropdown} = CaptionsControl(
+            captionsPlugin.getCaptionTracksLabels(),
+            captionsPlugin.getSelectedCaptionTrack()
+        );
+        this.Captions = CaptionsButton;
+        this.CaptionsDropdown = CaptionsDropdown;
+        this.BottomLowerRightControls.appendChild(CaptionsContainer);
+    }
 
-        // Download
+    private setupDownloadControl(): void {
+        if (!this.pluginCache["download"]) return;
         this.Download = DownloadControl();
-        this.Download.addEventListener("click", () => this.downloadVideo());
         this.BottomLowerRightControls.appendChild(this.Download);
+    }
 
-        // Fullscreen
+    private setupFullscreenControl(): void {
         this.Fullscreen = FullscreenControl();
-        this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
         this.BottomLowerRightControls.appendChild(this.Fullscreen);
     }
 
-    private updatePlayPauseButton() {
-        this.PlayPause!.innerHTML = this.player.isPaused() ? PlaySVG() : PauseSVG();
+    // Event Binding
+
+    private bindEventListeners(): void {
+        this.bindPlayerEvents();
+        this.bindUIEvents();
+        this.bindShortcutEvents();
     }
 
-    private updateFullscreenToggleButton() {
-        this.Fullscreen!.innerHTML = this.player.isFullscreen() ? FullscreenExitSVG() : FullscreenSVG();
+    private bindPlayerEvents(): void {
+        this.player.on('play', this.onPlay);
+        this.player.on('ended', this.onEnded);
+        this.player.on('pause', this.onPause);
+        this.player.on('loadedmetadata', this.updateTimeDisplay);
+        this.player.on('timeupdate', this.onTimeUpdate);
+        this.player.on('volumechange', this.updateVolumeUI);
+        this.player.on('progress', this.updateBufferedProgress);
+        this.player.on('waiting', this.showLoadingSpinner);
+        this.player.on('playing', this.hideLoadingSpinner);
+        this.player.on('stalled', this.showLoadingSpinner);
+        this.player.on('canplay', this.hideLoadingSpinner);
+        this.player.on('loop', this.updateLoopButton);
+        this.player.on('pip', this.updatePiPButton);
+        this.player.on('caption-cuechange', this.updateCaptionsText);
     }
 
-    private updateTimeDisplay() {
+    private bindUIEvents(): void {
+        // Inactivity timer
+        this.uiWrapper.addEventListener('mousemove', this.resetInactivityTimer);
+        this.uiWrapper.addEventListener('touchstart', this.resetInactivityTimer, {passive: true});
+        this.uiWrapper.addEventListener('keydown', this.resetInactivityTimer);
+        // Window events
+        window.addEventListener('resize', this.onWindowResize);
+        document.addEventListener('fullscreenchange', this.onFullscreenChange);
+        // Control events
+        this.PlayPause.addEventListener("click", () => this.player.togglePlayPause());
+        this.Fullscreen.addEventListener("click", () => this.player.toggleFullscreen());
+        this.Volume.addEventListener("click", () => this.player.toggleVolume());
+        this.VolumeSlider.addEventListener('input', (e) => this.handleVolumeSlider(parseFloat((e.target as HTMLInputElement).value)));
+        // Seekbar
+        this.SeekBar.addEventListener('pointerdown', this.handleSeekBarPointerDown);
+        window.addEventListener('pointermove', this.handleSeekBarPointerMove);
+        window.addEventListener('pointerup', this.handleSeekBarPointerUp);
+        this.SeekBar.addEventListener('seek', (e: any) => this.player.setSeekPosition(e.detail));
+        // Plugin Controls
+        this.PiP?.addEventListener("click", () => this.pluginCache["picture_in_picture"]?.togglePip());
+        this.Loop?.addEventListener("click", () => this.pluginCache["loop"]?.toggleLoop());
+        this.Download?.addEventListener("click", () => this.pluginCache["download"]?.downloadVideo(this.container));
+        this.Captions?.addEventListener("click", () => this.toggleDropdownVisibility(this.CaptionsDropdown));
+        this.PlaybackSpeed?.addEventListener("click", () => this.toggleDropdownVisibility(this.PlaybackSpeedDropdown));
+        // Dropdown Items
+        this.CaptionsDropdown?.childNodes.forEach(child => child.addEventListener("click", (e) => this.handleCaptionChange(e.currentTarget as HTMLElement)));
+        this.PlaybackSpeedDropdown?.childNodes.forEach(child => child.addEventListener("click", (e) => this.handlePlaybackSpeedChange(e.currentTarget as HTMLElement)));
+    }
+
+    private bindShortcutEvents(): void {
+        this.uiWrapper.addEventListener('keydown', this.handleKeyDown);
+        this.uiWrapper.addEventListener('keyup', this.handleKeyUp);
+    }
+
+    // Initial State
+
+    private initializeUIState(): void {
+        this.updateAllControls();
+        if (!this.player.isPaused()) {
+            this.scheduleHideControls();
+        }
+    }
+
+    private updateAllControls(): void {
+        this.updatePlayPauseButton();
+        this.updateFullscreenToggleButton();
+        this.updateVolumeUI();
+        this.updateBufferedProgress();
+        this.updateLoopButton();
+        this.updatePiPButton();
+        this.updateCaptionsFont();
+    }
+
+    // Player Event Handlers
+
+    private onPlay = (): void => {
+        this.hidePoster();
+        this.updatePlayPauseButton();
+        this.scheduleHideControls();
+    };
+
+    private onEnded = (): void => {
+        this.showPoster();
+    };
+
+    private onPause = (): void => {
+        this.updatePlayPauseButton();
+        this.showUI();
+    };
+
+    private onTimeUpdate = (): void => {
+        (this.SeekBar as any).setProgress(this.player.getSeekPosition());
+        this.updateTimeDisplay();
+    };
+
+    // DOM Event Handlers
+
+    private onWindowResize = (): void => this.updateCaptionsFont();
+    private onFullscreenChange = (): void => {
+        this.updateFullscreenToggleButton();
+        this.updateCaptionsFont();
+    };
+
+    private handleSeekBarPointerDown = (e: PointerEvent): void => {
+        this.isSeeking = true;
+        updatePosition(e.clientX, this.SeekBar);
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    };
+
+    private handleSeekBarPointerMove = (e: PointerEvent): void => {
+        if (this.isSeeking) updatePosition(e.clientX, this.SeekBar);
+    };
+
+    private handleSeekBarPointerUp = (): void => {
+        this.isSeeking = false;
+    };
+
+    private handleVolumeSlider(volume: number): void {
+        const newVolume = Math.max(0, Math.min(volume, 1));
+        this.player.setVolume(newVolume);
+    }
+
+    private handleCaptionChange(element: HTMLElement): void {
+        const captionsPlugin = this.pluginCache["captions"];
+        if (!captionsPlugin) return;
+
+        captionsPlugin.setSelectedCaption(element.textContent || "Off");
+
+        this.CaptionsDropdown.querySelector(".DALPlayer-captions-dropdown-item-active")?.classList.remove("DALPlayer-captions-dropdown-item-active");
+        element.classList.add("DALPlayer-captions-dropdown-item-active");
+
+        this.updateCaptionsText();
+        this.updateCaptionsFont();
+        this.toggleDropdownVisibility(this.CaptionsDropdown);
+    }
+
+    private handlePlaybackSpeedChange(element: HTMLElement): void {
+        const playbackSpeedPlugin = this.pluginCache["playback_speed"];
+        if (!playbackSpeedPlugin) return;
+
+        const playbackRate = parseFloat(element.textContent || '1');
+        playbackSpeedPlugin.setPlaybackSpeed(playbackRate);
+
+        this.PlaybackSpeedDropdown.querySelector(".DALPlayer-playback-speed-dropdown-item-active")?.classList.remove("DALPlayer-playback-speed-dropdown-item-active");
+        element.classList.add("DALPlayer-playback-speed-dropdown-item-active");
+
+        this.toggleDropdownVisibility(this.PlaybackSpeedDropdown);
+    }
+
+    // UI Update Methods
+
+    private updatePlayPauseButton = (): void => {
+        this.PlayPause.innerHTML = this.player.isPaused() ? PlaySVG() : PauseSVG();
+    };
+
+    private updateFullscreenToggleButton = (): void => {
+        this.Fullscreen.innerHTML = this.player.isFullscreen() ? FullscreenExitSVG() : FullscreenSVG();
+    };
+
+    private updateTimeDisplay = (): void => {
         if (!this.playerDuration) this.playerDuration = this.player.getDuration();
-        if (this.playerDuration > 0) this.TimeDisplay.innerHTML = formatTime(this.player.getCurrentTime()) + " / " + formatTime(this.playerDuration);
-        else setTimeout(() => this.updateTimeDisplay(), 500);
-    }
+        if (this.playerDuration > 0) this.TimeDisplay.innerHTML = `${formatTime(this.player.getCurrentTime())} / ${formatTime(this.playerDuration)}`;
+        else setTimeout(this.updateTimeDisplay, 500);
+    };
 
-    private updateVolumeButton() {
+    private updateVolumeUI = (): void => {
         const volume = this.player.getVolume();
-        if (volume === 0 || this.player.isMuted()) this.Volume.innerHTML = VolumeMutedSVG();
-        else if (volume > 0 && volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
-        else if (volume >= 0.33 && volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
-        else this.Volume.innerHTML = VolumeMaxSVG();
-        if (this.VolumeSlider) this.VolumeSlider.value = volume.toString();
-    }
+        const isMuted = this.player.isMuted();
 
-    private updateBufferedProgress() {
+        if (volume === 0 || isMuted) this.Volume.innerHTML = VolumeMutedSVG();
+        else if (volume < 0.33) this.Volume.innerHTML = VolumeLowSVG();
+        else if (volume < 0.66) this.Volume.innerHTML = VolumeMediumSVG();
+        else this.Volume.innerHTML = VolumeMaxSVG();
+
+        this.VolumeSlider.value = isMuted ? '0' : volume.toString();
+        const percentage = isMuted ? 0 : volume * 100;
+        this.VolumeSlider.style.background = `linear-gradient(to right, var(--DALPlayer-white) ${percentage}%, var(--DALPlayer-white-30) ${percentage}%)`;
+    };
+
+    private updateBufferedProgress = (): void => {
         const bufferedEnd = this.player.getBufferedEnd();
         const duration = this.player.getDuration();
         if (duration > 0 && (this.SeekBar as any).setBuffered) (this.SeekBar as any).setBuffered((bufferedEnd / duration) * 100);
-    }
+    };
 
-    private updateLoopButton() {
-        this.Loop.innerHTML = this.player.isLooping() ? LoopExistSVG() : LoopSVG();
-    }
+    private updateLoopButton = (): void => {
+        if (!this.Loop) return;
+        this.Loop.innerHTML = this.pluginCache["loop"]?.isLooping() ? LoopExistSVG() : LoopSVG();
+    };
 
-    private updatePiPButton() {
-        this.PiP.innerHTML = this.player.isPiP() ? PiPExitSVG() : PiPSVG();
-    }
+    private updatePiPButton = (): void => {
+        if (!this.PiP) return;
+        this.PiP.innerHTML = this.pluginCache["picture_in_picture"]?.isPiP() ? PiPExitSVG() : PiPSVG();
+    };
 
-    private updateVolumeSlider(volume: number) {
-        this.player.setVolume(Math.min(volume, 1));
-        this.updateVolumeButton();
-        this.VolumeSlider.style.background = `
-            linear-gradient(
-                to right,
-                var(--DALPlayer-white) 0%,
-                var(--DALPlayer-white) ${volume * 100}%,
-                var(--DALPlayer-white-30) ${volume * 100}%,
-                var(--DALPlayer-white-30) 100%
-            )`
-        ;
-    }
+    private updateCaptionsText = (): void => {
+        const activeTrack = this.pluginCache["captions"]?.getSelectedCaptionTrack();
+        const activeCues = activeTrack?.activeCues ?? [];
+        this.CaptionsText.innerHTML = Array.from(activeCues).map(cue => (cue as any).text).join("\n");
+    };
 
-    private showLoadingSpinner() {
+    private updateCaptionsFont = (): void => {
+        if (!this.CaptionsText) return;
+        this.CaptionsText.style.fontSize = `${this.player.getVideoMetadata().cH * 0.04}px`;
+    };
+
+    // Loading Spinner
+
+    private showLoadingSpinner = (): void => {
         if (!this.LoadingSpinner) {
             this.LoadingSpinner = LoadingSpinner();
             this.uiWrapper.prepend(this.LoadingSpinner);
         }
         this.LoadingSpinner.style.display = 'block';
-    }
+    };
 
-    private hideLoadingSpinner() {
+    private hideLoadingSpinner = (): void => {
         if (this.LoadingSpinner) this.LoadingSpinner.style.display = 'none';
-    }
+    };
+
+    // Controls Visibility
 
     private hideUI(): void {
-        if (this.CaptionsDropdown.style.display == 'none' && this.PlaybackSpeedDropdown.style.display == 'none') {
-            this.BottomControls.style.opacity = '0';
-            this.BottomControls.style.pointerEvents = 'none';
-            this.BottomControls.style.transition = 'opacity 0.5s ease';
-        }
+        const isAnyDropdownOpen = (this.CaptionsDropdown?.style.display === 'block') || (this.PlaybackSpeedDropdown?.style.display === 'block');
+        if (isAnyDropdownOpen) return;
+        this.BottomControls.style.opacity = '0';
+        this.BottomControls.style.pointerEvents = 'none';
     }
 
     private showUI(): void {
         this.BottomControls.style.opacity = '1';
         this.BottomControls.style.pointerEvents = 'auto';
-        this.BottomControls.style.transition = 'opacity 0.5s ease';
     }
 
-    private hidePoster() {
+    private hidePoster(): void {
         if (this.uiPoster) {
             this.uiPoster.style.opacity = '0';
             this.uiPoster.style.pointerEvents = 'none';
         }
     }
 
-    private showPoster() {
+    private showPoster(): void {
         if (this.uiPoster) {
             this.uiPoster.style.opacity = '1';
             this.uiPoster.style.pointerEvents = 'auto';
         }
     }
 
-    private scheduleHideControls() {
+    private scheduleHideControls(): void {
         if (this.hideControlsTimeoutId) clearTimeout(this.hideControlsTimeoutId);
         this.hideControlsTimeoutId = window.setTimeout(() => {
-            if (!this.player.isPaused() && !this.isDragging) this.hideUI();
-        }, this.inactivityDelay);
+            if (!this.player.isPaused() && !this.isSeeking) this.hideUI();
+        }, this.INACTIVITY_DELAY);
     }
 
-    private resetTimer() {
+    private resetInactivityTimer = (): void => {
         this.showUI();
         this.scheduleHideControls();
-    }
+    };
 
-    private updateCaptions() {
-        const newTrack = this.player.getSelectedCaptionTrack();
-        if (newTrack) this.updateCaptionsText(newTrack.activeCues);
-        else this.CaptionsText.innerHTML = "";
-    }
+    // Keyboard Shortcuts
 
-    private updateCaptionsText(activeCues: TextTrackCueList | null): void {
-        this.CaptionsText.innerHTML = Array.from(activeCues ?? []).map(cue => "text" in cue ? cue.text : "").join("\n");
-    }
+    private handleKeyDown = (e: KeyboardEvent): void => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
-    private updateCaptionsFont() {
-        this.CaptionsText.style.fontSize = `${this.player.getVideoMetadata().cH * 0.04}px`;
-    }
-
-    private updateCaptionsDropdown() {
-        this.CaptionsDropdown.style.display = this.CaptionsDropdown.style.display === "none" ? "block" : "none"
-    }
-
-    private updatePlaybackSpeedDropdown() {
-        this.PlaybackSpeedDropdown.style.display = this.PlaybackSpeedDropdown.style.display === "none" ? "block" : "none"
-    }
-
-    private doublePlaybackSpeed(double: boolean) {
-        if (!this.player.isPlaying()) return;
-        if (double) {
-            this.PlaybackText = document.createElement('span');
-            this.PlaybackText.className = "DALPlayer-playback-text"
-            this.PlaybackText.innerHTML = "2x" + DoubleSpeedSVG();
-            this.uiWrapper.appendChild(this.PlaybackText);
-            this.player.setPlaybackRate(2);
-        } else {
-            this.player.setPlaybackRate(this.lastPlaybackRate || 1);
-            if (this.PlaybackText) this.PlaybackText.remove();
+        // Spacebar long-press logic for 2x speed
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (this.spacebarPressTimer === null) {
+                this.spacebarPressTimer = window.setTimeout(() => {
+                    this.toggleDoubleSpeed(true);
+                    this.isSpacebarLongPress = true;
+                }, this.LONG_PRESS_THRESHOLD);
+            }
+            return;
         }
+
+        // Other shortcuts
+        switch (e.code) {
+            case 'ArrowRight':
+                e.preventDefault();
+                this.player.setSeekPosition(Math.min(this.player.getSeekPosition() + this.SEEK_TIME_SECONDS, this.player.getDuration()));
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.player.setSeekPosition(Math.max(this.player.getSeekPosition() - this.SEEK_TIME_SECONDS, 0));
+                break;
+            case 'KeyF':
+                e.preventDefault();
+                this.player.toggleFullscreen();
+                break;
+            case 'KeyM':
+                e.preventDefault();
+                this.player.toggleVolume();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.handleVolumeSlider(this.player.getVolume() + 0.1);
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                this.handleVolumeSlider(this.player.getVolume() - 0.1);
+                break;
+            case 'KeyL':
+                e.preventDefault();
+                this.pluginCache["loop"]?.toggleLoop();
+                break;
+            case 'KeyP':
+                e.preventDefault();
+                this.pluginCache["picture_in_picture"]?.togglePip();
+                break;
+        }
+    };
+
+    private handleKeyUp = (e: KeyboardEvent): void => {
+        if (e.code !== 'Space') return;
+        e.preventDefault();
+
+        if (this.spacebarPressTimer) {
+            clearTimeout(this.spacebarPressTimer);
+            this.spacebarPressTimer = null;
+        }
+
+        if (this.isSpacebarLongPress) this.toggleDoubleSpeed(false);
+        else this.player.togglePlayPause();
+
+        this.isSpacebarLongPress = false;
+    };
+
+    // Utility Methods
+
+    private toggleDropdownVisibility(dropdown: HTMLElement): void {
+        dropdown.style.display = dropdown.style.display === "none" || !dropdown.style.display ? "block" : "none";
     }
 
-    private downloadVideo() {
-        const videoUrl = this.player.getSource();
-        const link = document.createElement('a');
-        link.href = videoUrl;
-        link.target = "_blank";
-        link.download = videoUrl.split('/').pop() || 'video.mp4';
-        this.container.appendChild(link);
-        link.click();
-        this.container.removeChild(link);
-    }
-
-    // Shortcuts
-    private addShortcuts() {
-        let spaceKeyPressTimer: number | null = null;
-        let isSpaceKeyLongPressed = false;
-        let isSpaceKeyDown = true;
-        this.uiWrapper.tabIndex = 0;
-
-        this.uiWrapper.addEventListener('keydown', (e: KeyboardEvent) => {
-            const target = e.target as HTMLElement;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-
-            if (isSpaceKeyLongPressed && e.code !== 'Space') {
-                this.doublePlaybackSpeed(false);
-                isSpaceKeyLongPressed = false;
-                if (spaceKeyPressTimer !== null) {
-                    clearTimeout(spaceKeyPressTimer);
-                    spaceKeyPressTimer = null;
-                }
-                isSpaceKeyDown = false;
-            }
-
-            switch (e.code) {
-                // Play/Pause
-                case 'Space':
-                    e.preventDefault();
-                    if (!isSpaceKeyDown) {
-                        isSpaceKeyDown = true;
-                        spaceKeyPressTimer = window.setTimeout(() => {
-                            this.doublePlaybackSpeed(true);
-                            isSpaceKeyLongPressed = true;
-                        }, 500);
-                    }
-                    break;
-                // Seek
-                case 'ArrowRight':
-                    e.preventDefault();
-                    this.player.setSeekPosition(Math.min(this.player.getSeekPosition() + 5, this.player.getDuration()));
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    this.player.setSeekPosition(Math.max(this.player.getSeekPosition() - 5, 0));
-                    break;
-                // Fullscreen
-                case 'KeyF':
-                    e.preventDefault();
-                    this.player.toggleFullscreen();
-                    break;
-                // Volume
-                case 'KeyM':
-                    e.preventDefault();
-                    this.player.toggleVolume();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    const volumeArrowUp = this.player.getVolume() + 0.1;
-                    this.player.setVolume(Math.min(volumeArrowUp, 1));
-                    this.updateVolumeSlider(volumeArrowUp);
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    const volumeArrowDown = this.player.getVolume() - 0.1;
-                    this.player.setVolume(Math.max(volumeArrowDown, 0));
-                    this.updateVolumeSlider(volumeArrowDown);
-                    break;
-                // Loop
-                case 'KeyL':
-                    e.preventDefault();
-                    this.player.toggleLoop();
-                    break;
-                // PiP
-                case 'KeyP':
-                    e.preventDefault();
-                    this.player.togglePip();
-                    break;
-            }
-        });
-
-        this.uiWrapper.addEventListener('keyup', (e: KeyboardEvent) => {
-            const target = e.target as HTMLElement;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-            switch (e.code) {
-                case 'Space':
-                    e.preventDefault();
-                    if (!isSpaceKeyLongPressed) this.player.togglePlayPause();
-                    if (isSpaceKeyLongPressed) {
-                        this.doublePlaybackSpeed(false);
-                        isSpaceKeyLongPressed = false;
-                    }
-                    if (spaceKeyPressTimer !== null) {
-                        clearTimeout(spaceKeyPressTimer);
-                        spaceKeyPressTimer = null;
-                    }
-                    isSpaceKeyDown = false;
-                    break;
-            }
-        });
-
-    }
-
-    destroy() {
-        this.uiWrapper.remove();
+    private toggleDoubleSpeed(enable: boolean): void {
+        const playbackSpeedPlugin = this.pluginCache["playback_speed"];
+        if (!this.player.isPlaying() || !playbackSpeedPlugin) return;
+        if (enable) {
+            this.PlaybackText = document.createElement('span');
+            this.PlaybackText.className = "DALPlayer-playback-text";
+            this.PlaybackText.innerHTML = `2x ${DoubleSpeedSVG()}`;
+            this.uiWrapper.appendChild(this.PlaybackText);
+            playbackSpeedPlugin.setPlaybackSpeed(2);
+        } else {
+            playbackSpeedPlugin.setPlaybackSpeed(playbackSpeedPlugin.getLastPlaybackSpeed() || 1);
+            this.PlaybackText?.remove();
+        }
     }
 }
