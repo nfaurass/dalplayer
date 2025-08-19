@@ -8,7 +8,10 @@ import {DownloadPlugin} from "../plugins/DownloadPlugin";
 
 type Listener = (...args: any[]) => void;
 
-type DALPlayerUIOptions = "Base" | "V1";
+export enum DALPlayerUIType {
+    Base = "Base",
+    V1 = "V1",
+}
 
 interface NativePluginMap {
     captions: CaptionsPlugin;
@@ -25,51 +28,78 @@ export interface DALPlayerOptions {
     autoplay?: boolean;
     controls?: boolean;
     plugins?: DALPlayerPlugin[];
-    ui?: DALPlayerUIOptions;
+    ui?: DALPlayerUIType;
 }
 
 export class DALPlayer {
     private readonly container: HTMLElement;
     private readonly video: HTMLVideoElement;
+    private readonly ui?: BaseUI;
     private listeners: Record<string, Listener[]> = {};
     private plugins: DALPlayerPlugin[] = [];
-    private readonly ui;
     private poster: string = "";
 
-    constructor(options: DALPlayerOptions) {
-        // init
-        this.container = typeof options.parent === 'string' ? document.getElementById(options.parent)! : options.parent;
-        if (!this.container) throw new Error('DALPlayer parent element not found');
-        this.video = document.createElement('video');
-        this.video.controls = options.controls ?? false;
-        this.video.style.width = '100%';
-        this.container.appendChild(this.video);
+    private static readonly NATIVE_VIDEO_EVENTS: string[] = [
+        'play', 'pause', 'timeupdate', 'ended', 'loadedmetadata',
+        'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'
+    ];
 
-        // options
+    constructor(options: DALPlayerOptions) {
+        this.container = this._initializeContainer(options.parent);
+        this.video = this._createVideoElement(options.controls);
+        this.container.appendChild(this.video);
+        this._applyOptions(options);
+        this._initializePlugins(options.plugins);
+        this._bindVideoEvents();
+
+        if (options.ui) this.ui = this._initializeUI(options.ui);
+    }
+
+    private _initializeContainer(parent: HTMLElement | string): HTMLElement {
+        const container = typeof parent === 'string' ? document.getElementById(parent) : parent;
+        if (!container) throw new Error('DALPlayer parent element not found');
+        return container;
+    }
+
+    private _createVideoElement(showNativeControls: boolean = false): HTMLVideoElement {
+        const video = document.createElement('video');
+        video.controls = showNativeControls;
+        video.style.width = '100%';
+        return video;
+    }
+
+    private _applyOptions(options: DALPlayerOptions): void {
         if (options.source) this.setSource(options.source);
-        if (options.plugins) options.plugins.forEach(plugin => this.use(plugin));
-        if (options.poster) this.poster = options.poster;
+        if (options.poster) this.setPoster(options.poster);
         if (options.autoplay) {
             this.video.muted = true;
             this.video.play().catch(err => {
-                console.warn('Autoplay failed:', err);
+                console.warn('Autoplay was blocked by the browser:', err);
             });
         }
-        if (options.ui) {
-            this.video.controls = false;
-            switch (options.ui) {
-                default:
-                    this.ui = new BaseUI(this);
-            }
-        }
+        if (options.ui) this.video.controls = false;
+    }
 
-        // events
-        ['play', 'pause', 'timeupdate', 'ended', 'loadedmetadata', 'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'].forEach(eventName => {
-            this.video.addEventListener(eventName, (ev) => {
-                this.emit(eventName, ev);
+    private _initializeUI(uiType: DALPlayerUIType): BaseUI {
+        switch (uiType) {
+            default:
+                return new BaseUI(this);
+        }
+    }
+
+    private _initializePlugins(plugins?: DALPlayerPlugin[]): void {
+        if (plugins) plugins.forEach(plugin => this.use(plugin));
+    }
+
+    private _bindVideoEvents(): void {
+        DALPlayer.NATIVE_VIDEO_EVENTS.forEach(eventName => {
+            this.video.addEventListener(eventName, (event) => {
+                this.emit(eventName, event);
             });
         });
     }
+
+    // ACTIONS & STATE MODIFIERS
 
     public setSource(src: string): void {
         this.video.src = src;
@@ -78,19 +108,18 @@ export class DALPlayer {
 
     public setPoster(poster: string): void {
         this.poster = poster;
+        this.video.poster = poster;
         this.emit("poster", poster);
     }
 
     public setVolume(value: number): void {
         const volume = Math.max(0, Math.min(1, value));
-        if (!volume) this.setMuted(true);
-        else this.setMuted(false);
         this.video.volume = volume;
+        this.setMuted(volume === 0);
     }
 
     public toggleVolume(): void {
-        if (this.isMuted()) this.setMuted(false);
-        else this.setMuted(true);
+        this.setMuted(!this.video.muted);
     }
 
     public setSeekPosition(percentage: number): void {
@@ -101,6 +130,38 @@ export class DALPlayer {
     public setMuted(muted: boolean): void {
         this.video.muted = muted;
     }
+
+    public play(): void {
+        this.video.play();
+    }
+
+    public pause(): void {
+        this.video.pause();
+    }
+
+    public togglePlayPause(): void {
+        this.video.paused ? this.video.play() : this.video.pause();
+    }
+
+    public enterFullscreen(): void {
+        if (this.container.requestFullscreen) this.container.requestFullscreen();
+    }
+
+    public toggleFullscreen(): void {
+        if (this.isFullscreen()) document.exitFullscreen();
+        else this.enterFullscreen();
+    }
+
+    public destroy(): void {
+        this.video.pause();
+        this.video.src = '';
+        this.video.load();
+        this.video.remove();
+        if (this.ui) this.ui.destroy();
+        this.listeners = {};
+    }
+
+    // GETTERS & STATE QUERIES
 
     public getCurrentTime(): number {
         return this.video.currentTime;
@@ -172,53 +233,29 @@ export class DALPlayer {
         return !!this.poster;
     }
 
-    public play(): void {
-        this.video.play();
-    }
-
-    public pause(): void {
-        this.video.pause();
-    }
-
-    public togglePlayPause(): void {
-        this.video.paused ? this.video.play() : this.video.pause();
-    }
-
-    public enterFullscreen(): void {
-        if (this.container.requestFullscreen) this.container.requestFullscreen();
-    }
-
     public isFullscreen(): boolean {
         return document.fullscreenElement === this.container;
     }
 
-    public toggleFullscreen(): void {
-        if (this.isFullscreen()) document.exitFullscreen();
-        else this.enterFullscreen();
-    }
+    // PLUGIN SYSTEM
 
-    public destroy(): void {
-        this.video.pause();
-        this.video.src = '';
-        this.video.load();
-        this.video.remove();
-        if (this.ui) this.ui.destroy();
-    }
-
-    use<T extends DALPlayerPlugin>(plugin: T) {
+    public use<T extends DALPlayerPlugin>(plugin: T): void {
         plugin.setup(this);
         this.plugins.push(plugin);
     }
 
-    get<K extends keyof NativePluginMap>(name: K): NativePluginMap[K] | null {
+    public get<K extends keyof NativePluginMap>(name: K): NativePluginMap[K] | null {
         return (this.plugins.find(p => p.name === name) || null) as NativePluginMap[K] | null;
     }
 
-    list(): { [K in keyof NativePluginMap]?: NativePluginMap[K] } & { [key: string]: any } {
-        const map: { [key: string]: any } = {};
-        for (const plugin of this.plugins) map[plugin.name] = plugin;
-        return map;
+    public list(): Record<string, DALPlayerPlugin> {
+        return this.plugins.reduce((acc, plugin) => {
+            acc[plugin.name] = plugin;
+            return acc;
+        }, {} as Record<string, DALPlayerPlugin>);
     }
+
+    // EVENT EMITTER SYSTEM
 
     on(event: string, fn: Listener) {
         if (!this.listeners[event]) this.listeners[event] = [];
