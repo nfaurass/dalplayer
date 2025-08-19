@@ -116,7 +116,7 @@ export class BaseUI {
         if (!this.player.isPoster()) return;
         this.uiPoster = document.createElement("div");
         this.uiPoster.className = "DALPlayer-poster";
-        this.uiPoster.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 5%, transparent 100%), url(${this.player.getPoster()})`;
+        this.uiPoster.style.backgroundImage = `linear-gradient(to top, #000000ee 0%, transparent 60%), url(${this.player.getPoster()})`;
         const posterPlayButton = document.createElement("button");
         posterPlayButton.className = "DALPlayer-poster-play-button";
         posterPlayButton.innerHTML = PlaySVG();
