@@ -41,7 +41,8 @@ export class DALPlayer {
 
     private static readonly NATIVE_VIDEO_EVENTS: string[] = [
         'play', 'pause', 'timeupdate', 'ended', 'loadedmetadata',
-        'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay'
+        'volumechange', 'progress', 'waiting', 'playing', 'stalled', 'canplay',
+        'error'
     ];
 
     constructor(options: DALPlayerOptions) {
@@ -215,6 +216,10 @@ export class DALPlayer {
             W: this.video.width,
             H: this.video.height
         }
+    }
+
+    public getVideoError(): MediaError | null {
+        return this.video.error;
     }
 
     public isMuted(): boolean {

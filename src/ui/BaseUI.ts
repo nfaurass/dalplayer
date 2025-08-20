@@ -253,6 +253,7 @@ export class BaseUI {
         this.player.on('loop', this.updateLoopButton);
         this.player.on('pip', this.updatePiPButton);
         this.player.on('caption-cuechange', this.updateCaptionsText);
+        this.player.on('error', this.onError);
     }
 
     private bindUIEvents(): void {
@@ -330,6 +331,28 @@ export class BaseUI {
         this.updateTimeDisplay();
     };
 
+    private onError = (): void => {
+        const mediaError = this.player.getVideoError();
+        if (mediaError) {
+            let errorMessage = "An unexpected error occurred during playback.";
+            switch (Number(mediaError.code) || 0) {
+                case 1: // MEDIA_ERR_ABORTED
+                    errorMessage = "Playback was stopped.";
+                    break;
+                case 2: // MEDIA_ERR_NETWORK
+                    errorMessage = "The video could not be loaded. Please check your connection.";
+                    break;
+                case 3: // MEDIA_ERR_DECODE
+                    errorMessage = "The video cannot be played due to a playback issue.";
+                    break;
+                case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+                    errorMessage = "This video format is not supported.";
+                    break;
+            }
+            this.showError(errorMessage);
+        }
+    }
+
     // DOM Event Handlers
 
     private onWindowResize = (): void => this.updateCaptionsFont();
@@ -385,6 +408,24 @@ export class BaseUI {
     }
 
     // UI Update Methods
+
+    private showError(errorMessage: string): void {
+        this.BottomControls.remove();
+        this.CaptionsText.remove();
+        this.uiPoster?.remove();
+        this.LoadingSpinner?.remove();
+        this.player.getVideoElement().style.filter = "grayscale(1)";
+
+        const errorContainer = document.createElement("div");
+        errorContainer.className = "DALPlayer-error-container";
+
+        const errorText = document.createElement("span");
+        errorText.innerText = errorMessage;
+        errorText.className = "DALPlayer-error-text";
+
+        errorContainer.appendChild(errorText);
+        this.uiWrapper.appendChild(errorContainer);
+    }
 
     private updatePlayPauseButton = (): void => {
         this.PlayPause.innerHTML = this.player.isPaused() ? PlaySVG() : PauseSVG();
