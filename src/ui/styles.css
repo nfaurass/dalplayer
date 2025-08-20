@@ -222,7 +222,7 @@
     text-align: center;
 }
 
-.DALPlayer-captions-text {
+.DALPlayer-captions-text, .DALPlayer-error-text {
     display: inline-block;
     font-weight: bold;
     font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
@@ -231,7 +231,7 @@
     white-space: pre-wrap;
 }
 
-.DALPlayer-captions-text:empty {
+.DALPlayer-captions-text:empty, .DALPlayer-error-text:empty {
     display: none;
     background: none;
     padding: 0;
@@ -345,4 +345,17 @@
     100% {
         transform: translate(-50%, -50%) rotate(360deg);
     }
+}
+
+.DALPlayer-error-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to bottom, #000000ee 0%, rgba(0, 0, 0, 0.5) 25%, rgba(0, 0, 0, 0.5) 75%, #000000ee 100%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
