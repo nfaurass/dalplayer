@@ -5,6 +5,7 @@ import {PlaybackSpeedPlugin} from "../plugins/PlaybackSpeedPlugin";
 import {PictureInPicturePlugin} from "../plugins/PictureInPicturePlugin";
 import {LoopPlugin} from "../plugins/LoopPlugin";
 import {DownloadPlugin} from "../plugins/DownloadPlugin";
+import {AdsPlugin} from "../plugins/AdsPlugin";
 
 type Listener = (...args: any[]) => void;
 
@@ -19,6 +20,7 @@ interface NativePluginMap {
     picture_in_picture: PictureInPicturePlugin;
     loop: LoopPlugin;
     download: DownloadPlugin;
+    ads: AdsPlugin;
 }
 
 export interface DALPlayerOptions {
@@ -105,6 +107,10 @@ export class DALPlayer {
     public setSource(src: string): void {
         this.video.src = src;
         this.video.load();
+    }
+
+    public setCurrentTime(time: number): void {
+        this.video.currentTime = time;
     }
 
     public setPoster(poster: string): void {

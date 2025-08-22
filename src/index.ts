@@ -4,6 +4,7 @@ import {PictureInPicturePlugin} from './plugins/PictureInPicturePlugin';
 import {PlaybackSpeedPlugin} from './plugins/PlaybackSpeedPlugin';
 import {LoopPlugin} from './plugins/LoopPlugin';
 import {DownloadPlugin} from './plugins/DownloadPlugin';
+import {AdsPlugin} from './plugins/AdsPlugin';
 
 if (typeof window !== 'undefined') {
     const w = window as any;
@@ -13,7 +14,8 @@ if (typeof window !== 'undefined') {
     (DALPlayer as any).PlaybackSpeedPlugin = PlaybackSpeedPlugin;
     (DALPlayer as any).LoopPlugin = LoopPlugin;
     (DALPlayer as any).DownloadPlugin = DownloadPlugin;
+    (DALPlayer as any).AdsPlugin = AdsPlugin;
 }
 
-export {DALPlayer, CaptionsPlugin, PictureInPicturePlugin, PlaybackSpeedPlugin, LoopPlugin, DownloadPlugin};
+export {DALPlayer, CaptionsPlugin, PictureInPicturePlugin, PlaybackSpeedPlugin, LoopPlugin, DownloadPlugin, AdsPlugin};
 export default DALPlayer;
