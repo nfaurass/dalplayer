@@ -361,3 +361,23 @@
     justify-content: center;
     align-items: center;
 }
+
+.DALPlayer-ad-skip-button {
+    padding: calc(var(--DALPlayer-gutter) * 0.5) var(--DALPlayer-gutter);
+    border-radius: 10px;
+    background: var(--DALPlayer-black-overlay);
+    color: var(--DALPlayer-white);
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all var(--DALPlayer-transition-fast);
+}
+
+.DALPlayer-ad-skip-button:hover, .DALPlayer-ad-skip-button:active {
+    background: var(--DALPlayer-black-overlay-hover);
+}
+
+.DALPlayer-ad-skip-button:empty {
+    display: none;
+    opacity: 0;
+}
