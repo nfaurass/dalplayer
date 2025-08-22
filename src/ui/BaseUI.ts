@@ -30,6 +30,7 @@ import PlaybackSpeedControl from "./controls/PlaybackSpeed";
 // Utility Imports
 import {formatTime} from "./utils/formatTime";
 import {updatePosition} from "./utils/updatePosition";
+import {AdItem} from "../plugins/AdsPlugin";
 
 export class BaseUI {
     // Core Properties
@@ -60,6 +61,8 @@ export class BaseUI {
     private PlaybackSpeed!: HTMLButtonElement;
     private PlaybackSpeedDropdown!: HTMLDivElement;
     private PlaybackText!: HTMLSpanElement;
+    // Ad
+    private adSkipButton!: HTMLButtonElement;
 
     // State Properties
     private playerDuration: number = 0;
@@ -67,6 +70,9 @@ export class BaseUI {
     private hideControlsTimeoutId?: number;
     private spacebarPressTimer: number | null = null;
     private isSpacebarLongPress: boolean = false;
+    // Ad
+    private isAdPlaying: boolean = false;
+    private currentAd: AdItem | null = null;
 
     // Constants
     private readonly INACTIVITY_DELAY = 1500;
@@ -86,6 +92,12 @@ export class BaseUI {
         this.uiWrapper?.remove();
         document.removeEventListener('fullscreenchange', this.onFullscreenChange);
         window.removeEventListener('resize', this.onWindowResize);
+        if (this.pluginCache["ads"]) {
+            this.player.off('adstart', this.onAdStart);
+            this.player.off('adSkippable', this.onAdSkippable);
+            this.player.off('adend', this.onAdEnd);
+            this.player.off('timeupdate', this.onAdTimeUpdate);
+        }
     }
 
     // UI Construction
@@ -141,6 +153,7 @@ export class BaseUI {
         this.setupCaptionsControl();
         this.setupDownloadControl();
         this.setupFullscreenControl();
+        this.setupAdSkipButton();
         this.uiWrapper.appendChild(this.BottomControls);
     }
 
@@ -156,6 +169,13 @@ export class BaseUI {
         captionsContainer.appendChild(this.CaptionsText);
         captionsArea.appendChild(captionsContainer);
         this.uiWrapper.appendChild(captionsArea);
+    }
+
+    private setupAdSkipButton(): void {
+        this.adSkipButton = document.createElement('button');
+        this.adSkipButton.className = 'DALPlayer-ad-skip-button';
+        this.adSkipButton.style.display = 'none'; // Initially hidden
+        this.BottomUpperLeftControls.appendChild(this.adSkipButton);
     }
 
     // Individual Control Setup
@@ -236,6 +256,7 @@ export class BaseUI {
         this.bindPlayerEvents();
         this.bindUIEvents();
         this.bindShortcutEvents();
+        if (this.pluginCache["ads"]) this.bindAdEvents();
     }
 
     private bindPlayerEvents(): void {
@@ -290,6 +311,15 @@ export class BaseUI {
         this.uiWrapper.addEventListener('keyup', this.handleKeyUp);
     }
 
+    private bindAdEvents(): void {
+        this.player.on('adstart', this.onAdStart);
+        this.player.on('adSkippable', this.onAdSkippable);
+        this.player.on('adend', this.onAdEnd);
+        this.player.on('timeupdate', this.onAdTimeUpdate);
+        this.adSkipButton.addEventListener('click', () => this.pluginCache["ads"]?.skipAd());
+    }
+
+
     // Initial State
 
     private initializeUIState(): void {
@@ -318,7 +348,7 @@ export class BaseUI {
     };
 
     private onEnded = (): void => {
-        this.showPoster();
+        if (!this.isAdPlaying) this.showPoster();
     };
 
     private onPause = (): void => {
@@ -543,7 +573,7 @@ export class BaseUI {
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
         // Spacebar long-press logic for 2x speed
-        if (e.code === 'Space') {
+        if (e.code === 'Space' && !this.isAdPlaying) {
             e.preventDefault();
             if (this.spacebarPressTimer === null) {
                 this.spacebarPressTimer = window.setTimeout(() => {
@@ -557,10 +587,12 @@ export class BaseUI {
         // Other shortcuts
         switch (e.code) {
             case 'ArrowRight':
+                if (this.isAdPlaying) break;
                 e.preventDefault();
                 this.player.setSeekPosition(Math.min(this.player.getSeekPosition() + this.SEEK_TIME_SECONDS, this.player.getDuration()));
                 break;
             case 'ArrowLeft':
+                if (this.isAdPlaying) break;
                 e.preventDefault();
                 this.player.setSeekPosition(Math.max(this.player.getSeekPosition() - this.SEEK_TIME_SECONDS, 0));
                 break;
@@ -581,6 +613,7 @@ export class BaseUI {
                 this.handleVolumeSlider(this.player.getVolume() - 0.1);
                 break;
             case 'KeyL':
+                if (this.isAdPlaying) break;
                 e.preventDefault();
                 this.pluginCache["loop"]?.toggleLoop();
                 break;
@@ -592,7 +625,7 @@ export class BaseUI {
     };
 
     private handleKeyUp = (e: KeyboardEvent): void => {
-        if (e.code !== 'Space') return;
+        if (e.code !== 'Space' || this.isAdPlaying) return;
         e.preventDefault();
 
         if (this.spacebarPressTimer) {
@@ -626,4 +659,46 @@ export class BaseUI {
             this.PlaybackText?.remove();
         }
     }
+
+    // Ads
+
+    private onAdStart = (ad: AdItem): void => {
+        this.isAdPlaying = true;
+        this.updateTimeDisplay();
+        this.currentAd = ad;
+        this.SeekBar.style.display = 'none';
+        this.BottomLowerRightControls.style.display = 'none';
+        this.BottomUpperLeftControls.style.justifyContent = 'flex-end';
+        this.adSkipButton.style.display = 'flex';
+        this.adSkipButton.disabled = true;
+
+        if (ad.skipAfter && ad.skipAfter > 0) this.adSkipButton.textContent = `Skip in ${ad.skipAfter}s`;
+        else this.adSkipButton.textContent = '';
+
+        this.playerDuration = 0;
+    };
+
+    private onAdTimeUpdate = (): void => {
+        if (!this.isAdPlaying || !this.currentAd || typeof this.currentAd.skipAfter !== 'number') return;
+        const currentTime = this.player.getCurrentTime();
+        const remaining = Math.ceil(this.currentAd.skipAfter - currentTime);
+        if (remaining > 0) this.adSkipButton.textContent = `Skip in ${remaining}s`;
+    };
+
+    private onAdSkippable = (): void => {
+        this.adSkipButton.disabled = false;
+        this.adSkipButton.textContent = 'Skip Ad';
+    };
+
+    private onAdEnd = (): void => {
+        this.isAdPlaying = false;
+        this.updateTimeDisplay();
+        this.updateBufferedProgress();
+        this.currentAd = null;
+        this.SeekBar.style.display = 'block';
+        this.BottomLowerRightControls.style.display = 'flex';
+        this.BottomUpperLeftControls.style.justifyContent = 'flex-start';
+        this.adSkipButton.style.display = 'none';
+        this.playerDuration = 0;
+    };
 }
