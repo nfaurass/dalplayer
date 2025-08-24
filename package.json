@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/nfaurass/dalplayer#readme",
   "devDependencies": {
+    "@types/hls.js": "^0.13.3",
     "esbuild": "^0.25.8",
     "typescript": "^5.9.2"
   },
